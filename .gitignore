@@ -1,0 +1,21 @@
+__pycache__/
+
+#IDE files
+.vscode/
+.DS_Store
+
+# Python build related
+dist/
+
+# Test related
+.coverage
+coverage.xml
+results.xml
+test.log
+cyclonedx.json
+logs/
+
+# Environment
+.env
+set_env.sh
+poetry.lock
