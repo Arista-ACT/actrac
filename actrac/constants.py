@@ -32,7 +32,7 @@
 
 """ACT REST API Client Constants."""
 
-ACT_REST_API_BASE_URL = "https://lab.act.arista.com"
+ACT_REST_API_BASE_URL = "https://lab.act.arista.com/rest/v1"
 
 OPERATIONS_VALID_STATES = {
     "start_lab": ["Stopped", "Running", "Pending", "Starting"],
@@ -48,4 +48,31 @@ OPERATIONS_VALID_STATES = {
         "Stopped",
     ],
     "undeploy_lab": ["Ready", "Running", "Pending", "Starting", "Undeploying", "Stopped"],
+}
+
+
+class LAB_STATES:
+    """LAB STATES ENUM."""
+
+    READY = 0
+    PENDING = 1
+    RUNNING = 2
+    STOPPING = 3
+    STOPPED = 4
+    DEPLOYING = 5
+    UNDEPLOYING = 6
+    REBOOTING = 7
+    STARTING = 8
+    FAILED = 9
+    DEPLOYMENT_FAILED = 10
+    NODE_QUOTA_REACHED = 11
+    CONFIGURING = 12
+
+
+LAB_STATE_STR_TO_INT_MAP = {
+    "Ready": LAB_STATES.READY,
+    "Pending": LAB_STATES.PENDING,
+    "Running": LAB_STATES.RUNNING,
+    "Stopping": LAB_STATES.STOPPING,
+    "Stopped": LAB_STATES.STOPPED,
 }

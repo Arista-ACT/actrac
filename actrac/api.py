@@ -32,6 +32,7 @@
 
 """API wrapper functions for interacting with the ACT REST API."""
 
+from actrac.constants import LAB_STATE_STR_TO_INT_MAP
 from actrac.errors import ACTRESTAPIError
 
 
@@ -48,47 +49,51 @@ class ACTAPI:
     def available_node_versions(self):
         """:return: dict of available versions per node type.
 
-        Example response - {...}
+        Example resp - {...}
         """
-        response = self.clnt.get("/topologies/nodes")
-        return response.json()
+        return self.clnt.get("/topologies/nodes")
 
-    def read_operations(self):
+    def read_operations(self, offset=0, page_size=200):
         """Read status of all operations."""
-        # Initialize the offset
-        offset = 0
         # Initialize the done state
         done = False
         operations = []
         while not done:
             # Keep requesting operations until the returned list is empty
-            params = {"offset": offset}
-            response = self.clnt.get("/operations", params=params)
-            # Get the new operations from this response
-            new_ops = response.json().get("result", [])
+            params = {
+                "offset": offset,
+                "pageSize": page_size,
+            }
+            resp = self.clnt.get("/operations", params=params)
+            # Get the new operations from this resp
+            new_ops = resp.get("result", [])
             if not new_ops:
                 # If no new operations returned, we are done
                 done = True
                 continue
             # Add the newly found user topo to the master user topo list
             operations.extend(new_ops)
+            page_size = resp.get("pageSize", page_size)
+            total = resp.get("total")
+            if total and total <= page_size:
+                done = True
+                continue
             # Adjust the offset to the next page
-            offset += response.json().get("pageSize")
+            offset += page_size
         return operations
 
     def read_operation(self, op_id):
         """Read status of an operation by its ID."""
         if not op_id:
             raise ACTRESTAPIError("A 'op_id' must be provided")
-        response = self.clnt.get(f"/operations/{op_id}")
-        return response.json()
+        return self.clnt.get(f"/operations/{op_id}")
 
     def validate_topology_file(self, file, timeout=60):
         """Validate provide topology file.
 
         :param file: file name already uploaded to ACT.
         :param timeout: Timeout for validation of topology file to complete.
-        :return: dict of validation response message.
+        :return: dict of validation resp message.
 
         Example:
         -------
@@ -105,79 +110,63 @@ class ACTAPI:
 
         :param topology_definition_id: ID of topology to read.
         :return: dict of topology information.
-        Example response - {...}
+        Example resp - {...}
         """
         if not topology_definition_id:
             raise ACTRESTAPIError("A 'topology_definition_id' must be provided")
-        response = self.clnt.get(f"/topologies/{topology_definition_id}")
-        return response.json()
+        return self.clnt.get(f"/topologies/{topology_definition_id}")
 
-    def read_topologies(self):
+    def read_topologies(  # noqa: PLR0913
+        self,
+        offset=0,
+        page_size=200,
+        name=None,
+        user=None,
+        topology_file=None,
+        diagram_file=None,
+        device_count=None,
+    ):
         """Read all topologies.
 
         :return: dict of all topologies information.
-        Example response - {...}
+        Example resp - {...}
         """
-        # Initialize the offset
-        offset = 0
         # Initialize done state
         done = False
         topos = []
         while not done:
             # Keep requesting topologies until the returned list is empty
-            params = {"offset": offset}
-            response = self.clnt.get("/topologies", params=params)
-            # Get the new topos from this response
-            new_topos = response.json().get("result", [])
+            params = {
+                "offset": offset,
+                "pageSize": page_size,
+            }
+            if name:
+                params["name"] = name
+            if user:
+                params["created_by"] = user
+            if topology_file:
+                params["topology_pathname"] = topology_file
+            if diagram_file:
+                params["diagram_pathname"] = diagram_file
+            if device_count is not None:
+                params["device_count"] = device_count
+            resp = self.clnt.get("/topologies", params=params)
+            # Get the new topos from this resp
+            new_topos = resp.get("result", [])
             if not new_topos:
                 # If no new topos returned, we are done
                 done = True
                 continue
             # Add the newly found user topo to the master user topo list
             topos.extend(new_topos)
+            page_size = resp.get("pageSize", page_size)
+            total = resp.get("total")
+            if total and total <= page_size:
+                done = True
+                continue
             # Adjust the offset to the next page
-            offset += response.json().get("pageSize")
+            offset += page_size
         return topos
-
-    def read_user_topologies(self, user):
-        """Read a topologies created by provided user name.
-
-        :param user: user of the topologies to read.
-        :return: dict of topology information.
-        Example response - {...}
-        """
-        all_topos = self.read_topologies()
-        user_topos = []
-        for topo in all_topos:
-            if topo["created_by"] == user:
-                user_topos.append(topo)
-        return user_topos
-
-    def read_topology_by_name(self, name):
-        """Read a topology by name.
-
-        :param name: name of topology to read.
-        :return: dict of topology information.
-        Example response - {...}
-        """
-        all_topos = self.read_topologies()
-        for topo in all_topos:
-            if topo["name"] == name:
-                return topo
-        return None
-
-    def read_topology_by_file(self, file_name):
-        """Read a topology by file name.
-
-        :param file_name: file name of topology to read.
-        :return: dict of topology information.
-        Example response - {...}
-        """
-        all_topos = self.read_topologies()
-        for topo in all_topos:
-            if topo["file"] == file_name:
-                return topo
-        return None
 
     def delete_topology(self, topology_definition_id=None):
         """Delete a topology.
@@ -185,88 +174,81 @@ class ACTAPI:
         :param topology_definition_id: ID of topology definition to delete.
         :param name: name of topology definition to delete.
         :param file: file of topology definition to delete.
-        :return: dict of response/results.
-        Example response - {...}
+        :return: dict of resp/results.
+        Example resp - {...}
         """
         if not topology_definition_id:
             raise ACTRESTAPIError("A 'topology_definition_id' must be provided")
-        response = self.clnt.delete(f"/topologies/{topology_definition_id}")
-        return response.json()
+        return self.clnt.delete(f"/topologies/{topology_definition_id}")
 
     def read_lab(self, lab_id):
         """Read a lab by ID.
 
         :param lab_id: ID of lab to get information for.
         :return: dict of lab information.
-        Example response - {...}
+        Example resp - {...}
         """
-        # Read a lab by lab ID
-        # XXX not working - failing with a read timeout?
-
         if not lab_id:
             raise ACTRESTAPIError("A valid 'lab_id' must be provided")
-        response = self.clnt.get(f"/labs/{lab_id}")
-        return response.json()
+        return self.clnt.get(f"/labs/{lab_id}")
 
-    def read_labs(self):
+    def read_labs(  # noqa: PLR0913
+        self,
+        offset=0,
+        page_size=200,
+        name=None,
+        user=None,
+        topology_definition=None,
+        state=None,
+    ):
         """Read all labs.
 
         :return: dict of all labs information.
-        Example response - {...}
+        Example resp - {...}
         """
-        # Initialize the offset
-        offset = 0
         # Initialize done state
         done = False
         # Initialize the labs list
         labs = []
         while not done:
             # Keep requesting labs until the returned list is empty
-            params = {"offset": offset}
-            response = self.clnt.get("/labs", params=params)
-            # Get the new labs from this response
-            new_labs = response.json().get("result", [])
+            params = {
+                "offset": offset,
+                "pageSize": page_size,
+            }
+            if name:
+                params["name"] = name
+            if user:
+                params["user"] = user
+            if topology_definition:
+                params["topology_definition"] = topology_definition
+            if state is not None:
+                if isinstance(state, str):
+                    if state not in LAB_STATE_STR_TO_INT_MAP:
+                        print("INVALID STATE STRING")
+                        return None
+                    params["state"] = LAB_STATE_STR_TO_INT_MAP[state]
+                elif isinstance(state, int):
+                    params["state"] = state
+                else:
+                    print("INVALID STATE TYPE")
+                    return None
+            resp = self.clnt.get("/labs", params=params)
+            # Get the new labs from this resp
+            new_labs = resp.get("result", [])
             if not new_labs:
                 # If no new labs returned, we are done
                 done = True
                 continue
             labs.extend(new_labs)
+            page_size = resp.get("pageSize", page_size)
+            total = resp.get("total")
+            if total and total <= page_size:
+                done = True
+                continue
             # Adjust the offset to the next page
-            offset += response.json().get("pageSize")
+            offset += page_size
         return labs
-
-    def read_users_labs(self, user):
-        """Read all labs for provided user.
-
-        :return: dict of all labs information.
-        Example response - {...}
-        """
-        if not user:
-            raise ACTRESTAPIError("A valid 'user' must be provided")
-        all_labs = self.read_labs()
-        user_labs = []
-        for lab in all_labs:
-            # Filter out the labs that belong to the named user
-            # api sets the username of created labs to the email address, not the username
-            # so we will match on either <username> or <username>@arista.com
-            if lab["user"] == user | lab["user"] == f"{user}@arista.com":
-                user_labs.append(lab)
-        return user_labs
-
-    def read_lab_by_name(self, name):
-        """Read a lab by name.
-
-        :param name: name of lab to get information for.
-        :return: dict of lab information.
-        Example response - {...}
-        """
-        if not name:
-            raise ACTRESTAPIError("A valid 'name' must be provided")
-        all_labs = self.read_labs()
-        for lab in all_labs:
-            if lab["name"] == name:
-                return lab
-        return None
 
     def create_lab(self, name=None, description="", topo_def=None):
         """Create a lab.
@@ -274,81 +256,67 @@ class ACTAPI:
         :param name: ID of lab to delete.
         :param description: ...
         :param topo_def: ...
-        :return: dict of response/results.
-        Example response - {...}
+        :return: dict of resp/results.
+        Example resp - {...}
         """
-        # Fail if the inputs are not given
         if not name:
             raise ACTRESTAPIError("A 'name' for the lab must be provided")
         if not topo_def:
             raise ACTRESTAPIError("A topolofy definition 'topo_def' for the lab must be provided")
         data = {"name": name, "description": description, "topology_definition": topo_def}
-        response = self.clnt.post("/labs", data=data)
-        return response.json()
+        return self.clnt.post("/labs", data=data)
 
     def delete_lab(self, lab_id):
         """Delete a lab by ID.
 
         :param lab_id: ID of lab to delete.
-        :return: dict of response/results.
-        Example response - {...}
+        :return: dict of resp/results.
+        Example resp - {...}
         """
         if not lab_id:
             raise ACTRESTAPIError("A valid 'lab_id' must be provided")
-        response = self.clnt.delete(f"/labs/{lab_id}")
-        return response.json()
+        return self.clnt.delete(f"/labs/{lab_id}")
 
     def deploy_lab(self, lab_id):
         """Deploy an existing lab by ID.
 
         :param lab_id: ID of lab to deploy.
-        :return: dict of response/results.
-        Example response - {...}
+        :return: dict of resp/results.
+        Example resp - {...}
         """
-        # Deploy a lab by lab ID
-        #   states:
-        #       0 - undeployed
-        #       1 - undeploying
-        #       5 - deploying
-        #       12 - configuring
-        #       12 - running
         if not lab_id:
             raise ACTRESTAPIError("A valid 'lab_id' must be provided")
-        response = self.clnt.post(f"/labs/{lab_id}/deploy")
-        return response.json()
+        return self.clnt.post(f"/labs/{lab_id}/deploy")
 
     def undeploy_lab(self, lab_id):
         """Undeploy an existing lab by ID.
 
         :param lab_id: ID of lab to undeploy.
-        :return: dict of response/results.
-        Example response - {...}
+        :return: dict of resp/results.
+        Example resp - {...}
         """
         if not lab_id:
             raise ACTRESTAPIError("A valid 'lab_id' must be provided")
-        response = self.clnt.post(f"/labs/{lab_id}/undeploy")
-        return response.json()
+        return self.clnt.post(f"/labs/{lab_id}/undeploy")
 
     def start_lab(self, lab_id):
         """Start an existing lab by ID.
 
         :param lab_id: ID of lab to start.
-        :return: dict of response/results.
-        Example response - {...}
+        :return: dict of resp/results.
+        Example resp - {...}
         """
         if not lab_id:
             raise ACTRESTAPIError("A valid 'lab_id' must be provided")
-        response = self.clnt.post(f"/labs/{lab_id}/start")
-        return response.json()
+        return self.clnt.post(f"/labs/{lab_id}/start")
 
     def stop_lab(self, lab_id):
         """Stop an existing lab by ID.
 
         :param lab_id: ID of lab to stop.
-        :return: dict of response/results.
-        Example response - {...}
+        :return: dict of resp/results.
+        Example resp - {...}
         """
         if not lab_id:
             raise ACTRESTAPIError("A valid 'lab_id' must be provided")
-        response = self.clnt.post(f"/labs/{lab_id}/stop")
-        return response.json()
+        return self.clnt.post(f"/labs/{lab_id}/stop")

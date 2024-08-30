@@ -133,6 +133,26 @@ class ACTClient:
             base_url=self.base_url, headers=self.headers, timeout=timeout, verify=self.cert
         )
 
+    def _validate_response(self, response):
+        """Validate the response for given request.
+
+        :param response: response from request
+        :return: JSON decoded response data.
+        """
+        data = {}
+        if response:
+            if response.status_code != httpx.codes.OK:
+                err_msg = f"Response for request {response.url} is not OK. {response.status_code}"
+                self.log.error(err_msg)
+            try:
+                data = response.json()
+            except Exception as exc:
+                err_msg = f"Error decoding request {response.url} response data {response}"
+                self.log.error(exc)
+        else:
+            self.log.error(f"Response for request {response.url} is None.")
+        return data
+
     def get(self, url, params=None, timeout=30):
         """Make GET Request with provided parameters.
 
@@ -141,7 +161,8 @@ class ACTClient:
         :param timeout: configure timeout for get request.
         """
         if self.client:
-            self.client.get(url, params=params, timeout=timeout).raise_for_status()
+            resp = self.client.get(url, params=params, timeout=timeout).raise_for_status()
+            return self._validate_response(resp)
 
     def post(self, url, data=None, timeout=30):
         """Make POST Request with provided parameters.
@@ -152,7 +173,8 @@ class ACTClient:
         """
         if self.client:
             json_data = json.dumps(data)
-            self.client.post(url, data=json_data, timeout=timeout).raise_for_status()
+            resp = self.client.post(url, data=json_data, timeout=timeout).raise_for_status()
+            return self._validate_response(resp)
 
     def patch(self, url, data=None, timeout=30):
         """Make PATCH Request with provided parameters.
@@ -163,7 +185,8 @@ class ACTClient:
         """
         if self.client:
             json_data = json.dumps(data)
-            self.client.patch(url, data=json_data, timeout=timeout).raise_for_status()
+            resp = self.client.patch(url, data=json_data, timeout=timeout).raise_for_status()
+            return self._validate_response(resp)
 
     def delete(self, url, timeout=30):
         """Make DELETE Request with provided parameters.
@@ -172,4 +195,5 @@ class ACTClient:
         :param timeout: configure timeout for delete request.
         """
         if self.client:
-            self.client.delete(url, timeout=timeout).raise_for_status()
+            resp = self.client.delete(url, timeout=timeout).raise_for_status()
+            return self._validate_response(resp)
