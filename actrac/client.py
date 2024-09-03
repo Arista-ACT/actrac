@@ -133,6 +133,14 @@ class ACTClient:
             base_url=self.base_url, headers=self.headers, timeout=timeout, verify=self.cert
         )
 
+    def disconnect(self, timeout=30):
+        """Disconnect the current connection to ACT via logout.
+
+        :param timeout: request timeout for client.
+        :return: None
+        """
+        self.post("/auth/logout", timeout=timeout)
+
     def _validate_response(self, response):
         """Validate the response for given request.
 
