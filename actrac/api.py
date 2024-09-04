@@ -46,15 +46,22 @@ class ACTAPI:
         """
         self.clnt = clnt
 
-    def available_node_versions(self):
+    def available_node_versions(self, timeout=30):
         """:return: dict of available versions per node type.
 
+        :param timeout: Timeout for API call.
+        :return: list of dicts of operations information.
         Example resp - {...}
         """
-        return self.clnt.get("/topologies/nodes")
+        return self.clnt.get("/topologies/nodes", timeout=timeout)
 
-    def read_operations(self, offset=0, page_size=200):
-        """Read status of all operations."""
+    def read_operations(self, offset=0, page_size=200, timeout=30):
+        """Read status of all operations.
+
+        :param timeout: Timeout for API call.
+        :return: list of dicts of operations information.
+        Example resp - {...}
+        """
         # Initialize the done state
         done = False
         operations = []
@@ -64,7 +71,7 @@ class ACTAPI:
                 "offset": offset,
                 "pageSize": page_size,
             }
-            resp = self.clnt.get("/operations", params=params)
+            resp = self.clnt.get("/operations", params=params, timeout=timeout)
             # Get the new operations from this resp
             new_ops = resp.get("result", [])
             if not new_ops:
@@ -82,39 +89,43 @@ class ACTAPI:
             offset += page_size
         return operations
 
-    def read_operation(self, op_id):
-        """Read status of an operation by its ID."""
+    def read_operation(self, op_id, timeout=30):
+        """Read status of an operation by its ID.
+
+        :param timeout: Timeout for API call.
+        :return: dict of operation information.
+        Example resp - {...}
+        """
         if not op_id:
             raise ACTRESTAPIError("A 'op_id' must be provided")
-        return self.clnt.get(f"/operations/{op_id}")
+        return self.clnt.get(f"/operations/{op_id}", timeout=timeout)
 
-    def validate_topology_file(self, file, timeout=60):
+    def validate_topology_file(self, name, file, timeout=30):
         """Validate provide topology file.
 
-        :param file: file name already uploaded to ACT.
-        :param timeout: Timeout for validation of topology file to complete.
+        :param name: name for topology to be validated.
+        :param file: file name with topology contents to be validated.
+        :param timeout: Timeout for API call.
         :return: dict of validation resp message.
-
-        Example:
-        -------
-        {'originator_message_id': '362582560 - 3',
-         'op': 'validate_topology',
-         'data': {'file': 'topologies/TestTopologyFile.yml'},
-         'topic': 'topology_definition_status',
-         'status': 'success'}
         """
-        pass
+        file_contents = f"{file}"
+        data = {
+            "name": name,
+            "file": file_contents,
+        }
+        return self.clnt.post("/topologies/validate", data=data, timeout=timeout)
 
-    def read_topology(self, topology_definition_id=None):
+    def read_topology(self, topology_definition_id=None, timeout=30):
         """Read topology.
 
         :param topology_definition_id: ID of topology to read.
+        :param timeout: Timeout for API call.
         :return: dict of topology information.
         Example resp - {...}
         """
         if not topology_definition_id:
             raise ACTRESTAPIError("A 'topology_definition_id' must be provided")
-        return self.clnt.get(f"/topologies/{topology_definition_id}")
+        return self.clnt.get(f"/topologies/{topology_definition_id}", timeout=timeout)
 
     def read_topologies(  # noqa: PLR0913
         self,
@@ -125,9 +136,11 @@ class ACTAPI:
         topology_file=None,
         diagram_file=None,
         device_count=None,
+        timeout=30,
     ):
         """Read all topologies.
 
+        :param timeout: Timeout for API call.
         :return: dict of all topologies information.
         Example resp - {...}
         """
@@ -150,7 +163,7 @@ class ACTAPI:
                 params["diagram_pathname"] = diagram_file
             if device_count is not None:
                 params["device_count"] = device_count
-            resp = self.clnt.get("/topologies", params=params)
+            resp = self.clnt.get("/topologies", params=params, timeout=timeout)
             # Get the new topos from this resp
             new_topos = resp.get("result", [])
             if not new_topos:
@@ -168,29 +181,29 @@ class ACTAPI:
             offset += page_size
         return topos
 
-    def delete_topology(self, topology_definition_id=None):
+    def delete_topology(self, topology_definition_id=None, timeout=30):
         """Delete a topology.
 
         :param topology_definition_id: ID of topology definition to delete.
-        :param name: name of topology definition to delete.
-        :param file: file of topology definition to delete.
+        :param timeout: Timeout for API call.
         :return: dict of resp/results.
         Example resp - {...}
         """
         if not topology_definition_id:
             raise ACTRESTAPIError("A 'topology_definition_id' must be provided")
-        return self.clnt.delete(f"/topologies/{topology_definition_id}")
+        return self.clnt.delete(f"/topologies/{topology_definition_id}", timeout=timeout)
 
-    def read_lab(self, lab_id):
+    def read_lab(self, lab_id, timeout=30):
         """Read a lab by ID.
 
         :param lab_id: ID of lab to get information for.
+        :param timeout: Timeout for API call.
         :return: dict of lab information.
         Example resp - {...}
         """
         if not lab_id:
             raise ACTRESTAPIError("A valid 'lab_id' must be provided")
-        return self.clnt.get(f"/labs/{lab_id}")
+        return self.clnt.get(f"/labs/{lab_id}", timeout=timeout)
 
     def read_labs(  # noqa: PLR0913
         self,
@@ -200,9 +213,11 @@ class ACTAPI:
         user=None,
         topology_definition=None,
         state=None,
+        timeout=30,
     ):
         """Read all labs.
 
+        :param timeout: Timeout for API call.
         :return: dict of all labs information.
         Example resp - {...}
         """
@@ -225,15 +240,15 @@ class ACTAPI:
             if state is not None:
                 if isinstance(state, str):
                     if state not in LAB_STATE_STR_TO_INT_MAP:
-                        print("INVALID STATE STRING")
+                        self.clnt.log.error("read_labs: Invalid state string - %s", state)
                         return None
                     params["state"] = LAB_STATE_STR_TO_INT_MAP[state]
                 elif isinstance(state, int):
                     params["state"] = state
                 else:
-                    print("INVALID STATE TYPE")
+                    self.clnt.log.error("read_labs: Invalid state type - %s:%s", state, type(state))
                     return None
-            resp = self.clnt.get("/labs", params=params)
+            resp = self.clnt.get("/labs", params=params, timeout=timeout)
             # Get the new labs from this resp
             new_labs = resp.get("result", [])
             if not new_labs:
@@ -250,12 +265,13 @@ class ACTAPI:
             offset += page_size
         return labs
 
-    def create_lab(self, name=None, description="", topo_def=None):
+    def create_lab(self, name=None, description="", topo_def=None, timeout=30):
         """Create a lab.
 
-        :param name: ID of lab to delete.
-        :param description: ...
-        :param topo_def: ...
+        :param name: name of lab to create.
+        :param description: description of new lab
+        :param topo_def: topology file path name. 'file_pathname' param from topology data.
+        :param timeout: Timeout for API call.
         :return: dict of resp/results.
         Example resp - {...}
         """
@@ -264,59 +280,146 @@ class ACTAPI:
         if not topo_def:
             raise ACTRESTAPIError("A topolofy definition 'topo_def' for the lab must be provided")
         data = {"name": name, "description": description, "topology_definition": topo_def}
-        return self.clnt.post("/labs", data=data)
+        return self.clnt.post("/labs", data=data, timeout=timeout)
 
-    def delete_lab(self, lab_id):
+    def delete_lab(self, lab_id, timeout=30):
         """Delete a lab by ID.
 
         :param lab_id: ID of lab to delete.
+        :param timeout: Timeout for API call.
         :return: dict of resp/results.
         Example resp - {...}
         """
         if not lab_id:
             raise ACTRESTAPIError("A valid 'lab_id' must be provided")
-        return self.clnt.delete(f"/labs/{lab_id}")
+        return self.clnt.delete(f"/labs/{lab_id}", timeout=timeout)
 
-    def deploy_lab(self, lab_id):
+    def deploy_lab(self, lab_id, timeout=30):
         """Deploy an existing lab by ID.
 
         :param lab_id: ID of lab to deploy.
+        :param timeout: Timeout for API call.
         :return: dict of resp/results.
         Example resp - {...}
         """
         if not lab_id:
             raise ACTRESTAPIError("A valid 'lab_id' must be provided")
-        return self.clnt.post(f"/labs/{lab_id}/deploy")
+        return self.clnt.post(f"/labs/{lab_id}/deploy", timeout=timeout)
 
-    def undeploy_lab(self, lab_id):
+    def undeploy_lab(self, lab_id, timeout=30):
         """Undeploy an existing lab by ID.
 
         :param lab_id: ID of lab to undeploy.
+        :param timeout: Timeout for API call.
         :return: dict of resp/results.
         Example resp - {...}
         """
         if not lab_id:
             raise ACTRESTAPIError("A valid 'lab_id' must be provided")
-        return self.clnt.post(f"/labs/{lab_id}/undeploy")
+        return self.clnt.post(f"/labs/{lab_id}/undeploy", timeout=timeout)
 
-    def start_lab(self, lab_id):
+    def start_lab(self, lab_id, timeout=30):
         """Start an existing lab by ID.
 
         :param lab_id: ID of lab to start.
+        :param timeout: Timeout for API call.
         :return: dict of resp/results.
         Example resp - {...}
         """
         if not lab_id:
             raise ACTRESTAPIError("A valid 'lab_id' must be provided")
-        return self.clnt.post(f"/labs/{lab_id}/start")
+        return self.clnt.post(f"/labs/{lab_id}/start", timeout=timeout)
 
-    def stop_lab(self, lab_id):
+    def stop_lab(self, lab_id, timeout=30):
         """Stop an existing lab by ID.
 
         :param lab_id: ID of lab to stop.
+        :param timeout: Timeout for API call.
         :return: dict of resp/results.
         Example resp - {...}
         """
         if not lab_id:
             raise ACTRESTAPIError("A valid 'lab_id' must be provided")
-        return self.clnt.post(f"/labs/{lab_id}/stop")
+        return self.clnt.post(f"/labs/{lab_id}/stop", timeout=timeout)
+
+    def read_user(self, user_id, timeout=30):
+        """Read a user by ID.
+
+        :param user_id: ID of user to get information for.
+        :param timeout: Timeout for API call.
+        :return: dict of user information.
+        Example resp - {...}
+        """
+        if not user_id:
+            raise ACTRESTAPIError("A valid 'user_id' must be provided")
+        if not isinstance(user_id, int):
+            raise ACTRESTAPIError("Invalid 'user_id' type. Must be an integer")
+        return self.clnt.get(f"/users/{user_id}", timeout=timeout)
+
+    def read_users(  # noqa: PLR0913, PLR0912
+        self,
+        offset=0,
+        page_size=200,
+        user_name=None,
+        first_name=None,
+        last_name=None,
+        email_addr=None,
+        group_id=None,
+        status=None,
+        timeout=30,
+    ):
+        """Read all users.
+
+        :param timeout: Timeout for API call.
+        :return: list of dicts of all users information.
+        Example resp - {...}
+        """
+        # Initialize done state
+        done = False
+        # Initialize the users list
+        users = []
+        while not done:
+            # Keep requesting users until the returned list is empty
+            params = {
+                "offset": offset,
+                "pageSize": page_size,
+            }
+            if user_name:
+                params["user_name"] = user_name
+            if first_name:
+                params["first_name"] = first_name
+            if last_name:
+                params["last_name"] = last_name
+            if email_addr:
+                params["email_addr"] = email_addr
+            if group_id:
+                params["group_id"] = group_id
+            if status is not None:
+                if isinstance(status, str):
+                    if status not in LAB_STATE_STR_TO_INT_MAP:
+                        self.clnt.log.error("read_users: Invalid status string - %s", status)
+                        return None
+                    params["status"] = LAB_STATE_STR_TO_INT_MAP[status]
+                elif isinstance(status, int):
+                    params["status"] = status
+                else:
+                    self.clnt.log.error(
+                        "read_users: Invalid status type - %s:%s", status, type(status)
+                    )
+                    return None
+            resp = self.clnt.get("/users", params=params, timeout=timeout)
+            # Get the new users from this resp
+            new_users = resp.get("result", [])
+            if not new_users:
+                # If no new users returned, we are done
+                done = True
+                continue
+            users.extend(new_users)
+            page_size = resp.get("pageSize", page_size)
+            total = resp.get("total")
+            if total and total <= page_size:
+                done = True
+                continue
+            # Adjust the offset to the next page
+            offset += page_size
+        return users

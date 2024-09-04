@@ -100,6 +100,37 @@ class ACTClient:
         if not log_file and not log_stdout:
             self.log.addHandler(logging.NullHandler())
 
+    def _validate_response(self, response):
+        """Validate the response for given request.
+
+        :param response: response from request
+        :return: JSON decoded response data.
+        """
+        data = {}
+        if response:
+            try:
+                response.raise_for_status()
+            except httpx.HTTPStatusError as exc:
+                if exc.response.status_code == httpx.codes.NOT_FOUND:
+                    self.log.warning("No data found for request %s", exc.request.url)
+                    return data
+                else:
+                    raise
+
+            if response.status_code != httpx.codes.OK:
+                err_msg = f"Response for request {response.url} is not OK. {response.status_code}"
+                self.log.error(err_msg)
+                return data
+
+            try:
+                data = response.json()
+            except Exception as exc:
+                err_msg = f"Error decoding request {response.url} response data {response}"
+                self.log.error(exc)
+        else:
+            self.log.warning("Response is None.")
+        return data
+
     def get_access_token(self):
         """Authenticate to ACT for provided api key.
 
@@ -111,11 +142,12 @@ class ACTClient:
         headers = {"content-type": "application/json"}
         data = {"api_key": self.api_key}
         # Send the request
-        response = httpx.post(url, headers=headers, json=data, verify=self.cert).raise_for_status()
+        resp = httpx.post(url, headers=headers, json=data, verify=self.cert)
+        resp_data = self._validate_response(resp)
         # Get the token from the response or report an error
-        token = response.json().get("token")
+        token = resp_data.get("token")
         if not token:
-            err_str = f"Authentication failed. No token found: {response.json()}"
+            err_str = f"Authentication failed. No token found: {resp_data}"
             self.log.error(err_str)
             raise ACTRESTAPIError(err_str)
         return token
@@ -141,26 +173,6 @@ class ACTClient:
         """
         self.post("/auth/logout", timeout=timeout)
 
-    def _validate_response(self, response):
-        """Validate the response for given request.
-
-        :param response: response from request
-        :return: JSON decoded response data.
-        """
-        data = {}
-        if response:
-            if response.status_code != httpx.codes.OK:
-                err_msg = f"Response for request {response.url} is not OK. {response.status_code}"
-                self.log.error(err_msg)
-            try:
-                data = response.json()
-            except Exception as exc:
-                err_msg = f"Error decoding request {response.url} response data {response}"
-                self.log.error(exc)
-        else:
-            self.log.error(f"Response for request {response.url} is None.")
-        return data
-
     def get(self, url, params=None, timeout=30):
         """Make GET Request with provided parameters.
 
@@ -169,7 +181,7 @@ class ACTClient:
         :param timeout: configure timeout for get request.
         """
         if self.client:
-            resp = self.client.get(url, params=params, timeout=timeout).raise_for_status()
+            resp = self.client.get(url, params=params, timeout=timeout)
             return self._validate_response(resp)
 
     def post(self, url, data=None, timeout=30):
@@ -181,7 +193,7 @@ class ACTClient:
         """
         if self.client:
             json_data = json.dumps(data)
-            resp = self.client.post(url, data=json_data, timeout=timeout).raise_for_status()
+            resp = self.client.post(url, data=json_data, timeout=timeout)
             return self._validate_response(resp)
 
     def patch(self, url, data=None, timeout=30):
@@ -193,7 +205,7 @@ class ACTClient:
         """
         if self.client:
             json_data = json.dumps(data)
-            resp = self.client.patch(url, data=json_data, timeout=timeout).raise_for_status()
+            resp = self.client.patch(url, data=json_data, timeout=timeout)
             return self._validate_response(resp)
 
     def delete(self, url, timeout=30):
@@ -203,5 +215,5 @@ class ACTClient:
         :param timeout: configure timeout for delete request.
         """
         if self.client:
-            resp = self.client.delete(url, timeout=timeout).raise_for_status()
+            resp = self.client.delete(url, timeout=timeout)
             return self._validate_response(resp)

@@ -75,4 +75,12 @@ LAB_STATE_STR_TO_INT_MAP = {
     "Running": LAB_STATES.RUNNING,
     "Stopping": LAB_STATES.STOPPING,
     "Stopped": LAB_STATES.STOPPED,
+    "Deploying": LAB_STATES.DEPLOYING,
+    "Undeploying": LAB_STATES.UNDEPLOYING,
+    "Rebooting": LAB_STATES.REBOOTING,
+    "Starting": LAB_STATES.STARTING,
+    "Failed": LAB_STATES.FAILED,
+    "DeploymentFailed": LAB_STATES.DEPLOYMENT_FAILED,
+    "NodeQuotaReached": LAB_STATES.NODE_QUOTA_REACHED,
+    "Configuring": LAB_STATES.CONFIGURING,
 }
