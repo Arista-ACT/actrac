@@ -104,18 +104,6 @@ class ACTAPI:
             raise ACTRESTAPIError("A 'op_id' must be provided")
         return self.clnt.get(f"/operations/{op_id}", timeout=timeout)
 
-    def read_topology(self, topology_definition_id=None, timeout=30):
-        """Read topology.
-
-        :param topology_definition_id: ID of topology to read.
-        :param timeout: Timeout for API call.
-        :return: dict of topology information.
-        Example resp - {...}
-        """
-        if not topology_definition_id:
-            raise ACTRESTAPIError("A 'topology_definition_id' must be provided")
-        return self.clnt.get(f"/topologies/{topology_definition_id}", timeout=timeout)
-
     def poll_operation_by_id(self, op_id, poll_iterations=5, poll_sleep=20, request_timeout=30):
         """Poll provided operation ID for provided iterations with provided sleep.
 
@@ -130,12 +118,10 @@ class ACTAPI:
             raise ACTRESTAPIError("An 'op_id' must be provided")
         resp = None
         for index in range(poll_iterations):
-            print(f"OP CHECK {index+1}")
+            self.clnt.log.info("Operation check iteration %s", index + 1)
             resp = self.read_operation(op_id, timeout=request_timeout)
-            print(resp)
             if resp["is_completed"]:
-                print("OPERATION IS COMPLETE. BREAK LOOP")
-                print(f"OPERATION COMPLETED WITH STATUS - {resp['status']}")
+                self.clnt.log.info("Operation completed with status - %s", resp["status"])
                 break
             time.sleep(poll_sleep)
         return resp
@@ -154,11 +140,24 @@ class ACTAPI:
             raise ACTRESTAPIError("An 'operation' must be provided")
         schema = operation.get("schema_type")
         if schema != "operation_resource":
-            print(f"Object {schema} is not an operation object. Can't poll as an operation.")
-            return
+            raise ACTRESTAPIError(
+                f"Object {schema} is not an operation object. Can't poll as an operation."
+            )
         op_id = operation.get("id")
-        print(f"Poll operation {op_id} - {operation.get('operation_type')}")
+        self.clnt.log.info("Poll operation %s - %s", op_id, operation.get("operation_type"))
         return self.poll_operation_by_id(op_id, poll_iterations, poll_sleep, request_timeout)
+
+    def read_topology(self, topology_definition_id=None, timeout=30):
+        """Read topology.
+
+        :param topology_definition_id: ID of topology to read.
+        :param timeout: Timeout for API call.
+        :return: dict of topology information.
+        Example resp - {...}
+        """
+        if not topology_definition_id:
+            raise ACTRESTAPIError("A 'topology_definition_id' must be provided")
+        return self.clnt.get(f"/topologies/{topology_definition_id}", timeout=timeout)
 
     def read_topologies(  # noqa: PLR0913
         self,
@@ -244,6 +243,50 @@ class ACTAPI:
         if diagram_file_path:
             data["diagram_path"] = diagram_file_path
         return self.clnt.post("/topologies", data=data, timeout=timeout)
+
+    def update_topology(  # noqa: PLR0913
+        self,
+        topo_id,
+        name=None,
+        topo_def_file_path=None,
+        description=None,
+        diagram_file_path=None,
+        timeout=30,
+    ):
+        """Update a topology.
+
+        :param topo_id: topology ID of topology to update.
+        :param name: new name to update for the provided topology ID.
+        :param description: new description to update for provided topology ID
+        :param topo_def_file_path: new topology file path to update for provided topology ID.
+        :param diagram_file_path: new diagram file to update for provided topology ID.
+        :param timeout: Timeout for API call.
+        :return: dict of resp/results.
+        Example resp - {...}
+        """
+        if not topo_id:
+            raise ACTRESTAPIError("A topology ID as 'topo_id' to update must be provided")
+        data = {}
+        if name is not None:
+            data["name"] = name
+        if topo_def_file_path is not None:
+            with open(topo_def_file_path, "r") as topo_in:
+                yaml_topo = yaml.safe_load(topo_in)
+            data["file"] = yaml_topo
+        if description is not None:
+            data["description"] = description
+        if diagram_file_path is not None:
+            data["diagram_path"] = diagram_file_path
+        if not data:
+            self.clnt.log.warning(
+                "No parameters provided to udpate for topology with ID %s", topo_id
+            )
+            return None
+        data["id"] = topo_id
+        params = {
+            "id": topo_id,
+        }
+        return self.clnt.patch(f"/topologies/{topo_id}", params=params, data=data, timeout=timeout)
 
     def delete_topology(self, topology_definition_id=None, timeout=30):
         """Delete a topology.
