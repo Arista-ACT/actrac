@@ -32,6 +32,9 @@
 
 """API wrapper functions for interacting with the ACT REST API."""
 
+import yaml
+import json
+
 from actrac.constants import LAB_STATE_STR_TO_INT_MAP
 from actrac.errors import ACTRESTAPIError
 
@@ -100,19 +103,28 @@ class ACTAPI:
             raise ACTRESTAPIError("A 'op_id' must be provided")
         return self.clnt.get(f"/operations/{op_id}", timeout=timeout)
 
-    def validate_topology_file(self, name, file, timeout=30):
+    def validate_topology_file(self, name, topology_file_path, timeout=30):
         """Validate provide topology file.
 
         :param name: name for topology to be validated.
-        :param file: file name with topology contents to be validated.
+        :param topology_file_path: path to file with topology contents to be validated.
         :param timeout: Timeout for API call.
         :return: dict of validation resp message.
         """
-        file_contents = f"{file}"
+        # Read the topology file and convert to json data
+        with open(topology_file_path, 'r') as topo_in:
+            yaml_topo = yaml.safe_load(topo_in)
+        print("YAML")
+        print(type(yaml_topo))
+        print(yaml_topo)
+        print("")
         data = {
             "name": name,
-            "file": file_contents,
+            "file": yaml_topo,
         }
+        print("")
+        print(data)
+        print("")
         return self.clnt.post("/topologies/validate", data=data, timeout=timeout)
 
     def read_topology(self, topology_definition_id=None, timeout=30):
@@ -180,6 +192,27 @@ class ACTAPI:
             # Adjust the offset to the next page
             offset += page_size
         return topos
+
+    def create_topology(self, name=None, description="", topology_definition=None,
+                        diagram_file_path=None, timeout=30):
+        """Create a topology.
+
+        :param name: name of topology to create.
+        :param description: description of new topology
+        :param topo_def: topology file path name. 'file_pathname' param from topology data.
+        :param timeout: Timeout for API call.
+        :return: dict of resp/results.
+        Example resp - {...}
+        """
+        if not name:
+            raise ACTRESTAPIError("A 'name' for the topology must be provided")
+        if not topology_definition:
+            raise ACTRESTAPIError(
+                "A topolofy definition 'topo_def' for the topology must be provided"
+            )
+        data = {"name": name, "description": description,
+                "file": topology_definition, "diagram_path": diagram_file_path}
+        return self.clnt.post("/topologies", data=data, timeout=timeout)
 
     def delete_topology(self, topology_definition_id=None, timeout=30):
         """Delete a topology.
@@ -393,6 +426,8 @@ class ACTAPI:
             if email_addr:
                 params["email_addr"] = email_addr
             if group_id:
+                if not isinstance(group_id, int):
+                    raise ACTRESTAPIError("Invalid 'group_id' type. Must be an integer")
                 params["group_id"] = group_id
             if status is not None:
                 if isinstance(status, str):
@@ -423,3 +458,37 @@ class ACTAPI:
             # Adjust the offset to the next page
             offset += page_size
         return users
+
+    def read_groups(self, offset=0, page_size=200, timeout=30):
+        """Read all groups.
+
+        :param timeout: Timeout for API call.
+        :return: list of dicts of all groups information.
+        Example resp - {...}
+        """
+        # Initialize done state
+        done = False
+        # Initialize the groups list
+        groups = []
+        while not done:
+            # Keep requesting groups until the returned list is empty
+            params = {
+                "offset": offset,
+                "pageSize": page_size,
+            }
+            resp = self.clnt.get("/groups", params=params, timeout=timeout)
+            # Get the new groups from this resp
+            new_groups = resp.get("result", [])
+            if not new_groups:
+                # If no new groups returned, we are done
+                done = True
+                continue
+            groups.extend(new_groups)
+            page_size = resp.get("pageSize", page_size)
+            total = resp.get("total")
+            if total and total <= page_size:
+                done = True
+                continue
+            # Adjust the offset to the next page
+            offset += page_size
+        return groups

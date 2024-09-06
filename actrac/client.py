@@ -115,6 +115,11 @@ class ACTClient:
                     self.log.warning("No data found for request %s", exc.request.url)
                     return data
                 else:
+                    print("REQUEST FAILED")
+                    print("")
+                    print(response.request)
+                    print(response.request.content)
+                    print("")
                     raise
 
             if response.status_code != httpx.codes.OK:
