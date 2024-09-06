@@ -32,6 +32,7 @@
 
 """API wrapper functions for interacting with the ACT REST API."""
 
+import time
 
 import yaml
 
@@ -114,6 +115,50 @@ class ACTAPI:
         if not topology_definition_id:
             raise ACTRESTAPIError("A 'topology_definition_id' must be provided")
         return self.clnt.get(f"/topologies/{topology_definition_id}", timeout=timeout)
+
+    def poll_operation_by_id(self, op_id, poll_iterations=5, poll_sleep=20, request_timeout=30):
+        """Poll provided operation ID for provided iterations with provided sleep.
+
+        :param op_id: An operation ID.
+        :param poll_iterations: ...
+        :param poll_sleep: ...
+        :param request_timeout: Timeout for individual operation API calls.
+        :return: dict of operation information or None.
+        Example resp - {...}
+        """
+        if not op_id:
+            raise ACTRESTAPIError("An 'op_id' must be provided")
+        resp = None
+        for index in range(poll_iterations):
+            print(f"OP CHECK {index+1}")
+            resp = self.read_operation(op_id, timeout=request_timeout)
+            print(resp)
+            if resp["is_completed"]:
+                print("OPERATION IS COMPLETE. BREAK LOOP")
+                print(f"OPERATION COMPLETED WITH STATUS - {resp['status']}")
+                break
+            time.sleep(poll_sleep)
+        return resp
+
+    def poll_operation(self, operation, poll_iterations=5, poll_sleep=20, request_timeout=30):
+        """Poll provided operation for provided iterations with provided sleep.
+
+        :param operation: An operation object.
+        :param poll_iterations: ...
+        :param poll_sleep: ...
+        :param request_timeout: Timeout for individual operation API calls.
+        :return: dict of operation information or None.
+        Example resp - {...}
+        """
+        if not operation:
+            raise ACTRESTAPIError("An 'operation' must be provided")
+        schema = operation.get("schema_type")
+        if schema != "operation_resource":
+            print(f"Object {schema} is not an operation object. Can't poll as an operation.")
+            return
+        op_id = operation.get("id")
+        print(f"Poll operation {op_id} - {operation.get('operation_type')}")
+        return self.poll_operation_by_id(op_id, poll_iterations, poll_sleep, request_timeout)
 
     def read_topologies(  # noqa: PLR0913
         self,
