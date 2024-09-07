@@ -50,6 +50,50 @@ class ACTAPI:
         """
         self.clnt = clnt
 
+    def _read_all_via_paging(  # noqa: PLR0913
+        self,
+        api_endpoint,
+        params=None,
+        offset=0,
+        page_size=200,
+        timeout=30,
+    ):
+        """Read all objects for provided URL with provided params using pageSize to poll.
+
+        :param timeout: Timeout for API call.
+        :return: list of dicts of all objects information.
+        Example resp - {...}
+        """
+        # Initialize params if None provided
+        if not params:
+            params = {}
+        # Add pageSize to params
+        params["pageSize"] = page_size
+        # Initialize the objects list
+        objects = []
+        # Initialize done state
+        done = False
+        while not done:
+            # Add offset to params and update it every loop iteration.
+            params["offset"] = offset
+            # Keep requesting objects until the returned list is empty
+            resp = self.clnt.get(api_endpoint, params=params, timeout=timeout)
+            # Get the new objects from this resp
+            new_objs = resp.get("result", [])
+            if not new_objs:
+                # If no new objects returned, we are done
+                done = True
+                continue
+            objects.extend(new_objs)
+            page_size = resp.get("pageSize", page_size)
+            total = resp.get("total")
+            if total and total <= page_size:
+                done = True
+                continue
+            # Adjust the offset to the next page
+            offset += page_size
+        return objects
+
     def available_node_versions(self, timeout=30):
         """:return: dict of available versions per node type.
 
@@ -66,32 +110,7 @@ class ACTAPI:
         :return: list of dicts of operations information.
         Example resp - {...}
         """
-        # Initialize the done state
-        done = False
-        operations = []
-        while not done:
-            # Keep requesting operations until the returned list is empty
-            params = {
-                "offset": offset,
-                "pageSize": page_size,
-            }
-            resp = self.clnt.get("/operations", params=params, timeout=timeout)
-            # Get the new operations from this resp
-            new_ops = resp.get("result", [])
-            if not new_ops:
-                # If no new operations returned, we are done
-                done = True
-                continue
-            # Add the newly found user topo to the master user topo list
-            operations.extend(new_ops)
-            page_size = resp.get("pageSize", page_size)
-            total = resp.get("total")
-            if total and total <= page_size:
-                done = True
-                continue
-            # Adjust the offset to the next page
-            offset += page_size
-        return operations
+        return self._read_all_via_paging("/operations", None, offset, page_size, timeout)
 
     def read_operation(self, op_id, timeout=30):
         """Read status of an operation by its ID.
@@ -176,42 +195,19 @@ class ACTAPI:
         :return: dict of all topologies information.
         Example resp - {...}
         """
-        # Initialize done state
-        done = False
-        topos = []
-        while not done:
-            # Keep requesting topologies until the returned list is empty
-            params = {
-                "offset": offset,
-                "pageSize": page_size,
-            }
-            if name:
-                params["name"] = name
-            if user:
-                params["created_by"] = user
-            if topology_file:
-                params["topology_pathname"] = topology_file
-            if diagram_file:
-                params["diagram_pathname"] = diagram_file
-            if device_count is not None:
-                params["device_count"] = device_count
-            resp = self.clnt.get("/topologies", params=params, timeout=timeout)
-            # Get the new topos from this resp
-            new_topos = resp.get("result", [])
-            if not new_topos:
-                # If no new topos returned, we are done
-                done = True
-                continue
-            # Add the newly found user topo to the master user topo list
-            topos.extend(new_topos)
-            page_size = resp.get("pageSize", page_size)
-            total = resp.get("total")
-            if total and total <= page_size:
-                done = True
-                continue
-            # Adjust the offset to the next page
-            offset += page_size
-        return topos
+        # Initialize params for read topologies query
+        params = {}
+        if name:
+            params["name"] = name
+        if user:
+            params["created_by"] = user
+        if topology_file:
+            params["topology_pathname"] = topology_file
+        if diagram_file:
+            params["diagram_pathname"] = diagram_file
+        if device_count is not None:
+            params["device_count"] = device_count
+        return self._read_all_via_paging("/topologies", params, offset, page_size, timeout)
 
     def create_topology(  # noqa: PLR0913
         self,
@@ -328,49 +324,26 @@ class ACTAPI:
         :return: dict of all labs information.
         Example resp - {...}
         """
-        # Initialize done state
-        done = False
-        # Initialize the labs list
-        labs = []
-        while not done:
-            # Keep requesting labs until the returned list is empty
-            params = {
-                "offset": offset,
-                "pageSize": page_size,
-            }
-            if name:
-                params["name"] = name
-            if user:
-                params["user"] = user
-            if topology_definition:
-                params["topology_definition"] = topology_definition
-            if state is not None:
-                if isinstance(state, str):
-                    if state not in LAB_STATE_STR_TO_INT_MAP:
-                        self.clnt.log.error("read_labs: Invalid state string - %s", state)
-                        return None
-                    params["state"] = LAB_STATE_STR_TO_INT_MAP[state]
-                elif isinstance(state, int):
-                    params["state"] = state
-                else:
-                    self.clnt.log.error("read_labs: Invalid state type - %s:%s", state, type(state))
+        # Initialize params for read topologies query
+        params = {}
+        if name:
+            params["name"] = name
+        if user:
+            params["user"] = user
+        if topology_definition:
+            params["topology_definition"] = topology_definition
+        if state is not None:
+            if isinstance(state, str):
+                if state not in LAB_STATE_STR_TO_INT_MAP:
+                    self.clnt.log.error("read_labs: Invalid state string - %s", state)
                     return None
-            resp = self.clnt.get("/labs", params=params, timeout=timeout)
-            # Get the new labs from this resp
-            new_labs = resp.get("result", [])
-            if not new_labs:
-                # If no new labs returned, we are done
-                done = True
-                continue
-            labs.extend(new_labs)
-            page_size = resp.get("pageSize", page_size)
-            total = resp.get("total")
-            if total and total <= page_size:
-                done = True
-                continue
-            # Adjust the offset to the next page
-            offset += page_size
-        return labs
+                params["state"] = LAB_STATE_STR_TO_INT_MAP[state]
+            elif isinstance(state, int):
+                params["state"] = state
+            else:
+                self.clnt.log.error("read_labs: Invalid state type - %s:%s", state, type(state))
+                return None
+        return self._read_all_via_paging("/labs", params, offset, page_size, timeout)
 
     def create_lab(self, name=None, description="", topo_def=None, timeout=30):
         """Create a lab.
@@ -481,57 +454,32 @@ class ACTAPI:
         :return: list of dicts of all users information.
         Example resp - {...}
         """
-        # Initialize done state
-        done = False
-        # Initialize the users list
-        users = []
-        while not done:
-            # Keep requesting users until the returned list is empty
-            params = {
-                "offset": offset,
-                "pageSize": page_size,
-            }
-            if user_name:
-                params["user_name"] = user_name
-            if first_name:
-                params["first_name"] = first_name
-            if last_name:
-                params["last_name"] = last_name
-            if email_addr:
-                params["email_addr"] = email_addr
-            if group_id:
-                if not isinstance(group_id, int):
-                    raise ACTRESTAPIError("Invalid 'group_id' type. Must be an integer")
-                params["group_id"] = group_id
-            if status is not None:
-                if isinstance(status, str):
-                    if status not in LAB_STATE_STR_TO_INT_MAP:
-                        self.clnt.log.error("read_users: Invalid status string - %s", status)
-                        return None
-                    params["status"] = LAB_STATE_STR_TO_INT_MAP[status]
-                elif isinstance(status, int):
-                    params["status"] = status
-                else:
-                    self.clnt.log.error(
-                        "read_users: Invalid status type - %s:%s", status, type(status)
-                    )
+        # Initialize params for read topologies query
+        params = {}
+        if user_name:
+            params["user_name"] = user_name
+        if first_name:
+            params["first_name"] = first_name
+        if last_name:
+            params["last_name"] = last_name
+        if email_addr:
+            params["email_addr"] = email_addr
+        if group_id:
+            if not isinstance(group_id, int):
+                raise ACTRESTAPIError("Invalid 'group_id' type. Must be an integer")
+            params["group_id"] = group_id
+        if status is not None:
+            if isinstance(status, str):
+                if status not in LAB_STATE_STR_TO_INT_MAP:
+                    self.clnt.log.error("read_users: Invalid status string - %s", status)
                     return None
-            resp = self.clnt.get("/users", params=params, timeout=timeout)
-            # Get the new users from this resp
-            new_users = resp.get("result", [])
-            if not new_users:
-                # If no new users returned, we are done
-                done = True
-                continue
-            users.extend(new_users)
-            page_size = resp.get("pageSize", page_size)
-            total = resp.get("total")
-            if total and total <= page_size:
-                done = True
-                continue
-            # Adjust the offset to the next page
-            offset += page_size
-        return users
+                params["status"] = LAB_STATE_STR_TO_INT_MAP[status]
+            elif isinstance(status, int):
+                params["status"] = status
+            else:
+                self.clnt.log.error("read_users: Invalid status type - %s:%s", status, type(status))
+                return None
+        return self._read_all_via_paging("/users", params, offset, page_size, timeout)
 
     def read_groups(self, offset=0, page_size=200, timeout=30):
         """Read all groups.
@@ -540,29 +488,4 @@ class ACTAPI:
         :return: list of dicts of all groups information.
         Example resp - {...}
         """
-        # Initialize done state
-        done = False
-        # Initialize the groups list
-        groups = []
-        while not done:
-            # Keep requesting groups until the returned list is empty
-            params = {
-                "offset": offset,
-                "pageSize": page_size,
-            }
-            resp = self.clnt.get("/groups", params=params, timeout=timeout)
-            # Get the new groups from this resp
-            new_groups = resp.get("result", [])
-            if not new_groups:
-                # If no new groups returned, we are done
-                done = True
-                continue
-            groups.extend(new_groups)
-            page_size = resp.get("pageSize", page_size)
-            total = resp.get("total")
-            if total and total <= page_size:
-                done = True
-                continue
-            # Adjust the offset to the next page
-            offset += page_size
-        return groups
+        return self._read_all_via_paging("/groups", None, offset, page_size, timeout)
