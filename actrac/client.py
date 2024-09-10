@@ -196,7 +196,7 @@ class ACTClient:
             resp = self.client.post(url, data=json_data, timeout=timeout)
             return self._validate_response(resp)
 
-    def patch(self, url, params=None, data=None, timeout=30):
+    def patch(self, url, data=None, timeout=30):
         """Make PATCH Request with provided parameters.
 
         :param url: ...
@@ -205,7 +205,7 @@ class ACTClient:
         """
         if self.client:
             json_data = json.dumps(data)
-            resp = self.client.patch(url, params=params, data=json_data, timeout=timeout)
+            resp = self.client.patch(url, data=json_data, timeout=timeout)
             return self._validate_response(resp)
 
     def delete(self, url, timeout=30):

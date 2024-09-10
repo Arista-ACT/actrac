@@ -139,6 +139,7 @@ class ACTAPI:
         for index in range(poll_iterations):
             self.clnt.log.info("Operation check iteration %s", index + 1)
             resp = self.read_operation(op_id, timeout=request_timeout)
+            self.clnt.log.info(resp)
             if resp["is_completed"]:
                 self.clnt.log.info("Operation completed with status - %s", resp["status"])
                 break
@@ -275,14 +276,10 @@ class ACTAPI:
             data["diagram_path"] = diagram_file_path
         if not data:
             self.clnt.log.warning(
-                "No parameters provided to udpate for topology with ID %s", topo_id
+                "No parameters provided to update for topology with ID %s", topo_id
             )
             return None
-        data["id"] = topo_id
-        params = {
-            "id": topo_id,
-        }
-        return self.clnt.patch(f"/topologies/{topo_id}", params=params, data=data, timeout=timeout)
+        return self.clnt.patch(f"/topologies/{topo_id}", data=data, timeout=timeout)
 
     def delete_topology(self, topology_definition_id=None, timeout=30):
         """Delete a topology.
@@ -361,6 +358,34 @@ class ACTAPI:
             raise ACTRESTAPIError("A topolofy definition 'topo_def' for the lab must be provided")
         data = {"name": name, "description": description, "topology_definition": topo_def}
         return self.clnt.post("/labs", data=data, timeout=timeout)
+
+    def update_lab(  # noqa: PLR0913
+        self,
+        lab_id,
+        name=None,
+        description=None,
+        timeout=30,
+    ):
+        """Update a lab.
+
+        :param lab_id: Lab ID of lab to update.
+        :param name: new name to update for the provided topology ID.
+        :param description: new description to update for provided topology ID
+        :param timeout: Timeout for API call.
+        :return: dict of resp/results.
+        Example resp - {...}
+        """
+        if not lab_id:
+            raise ACTRESTAPIError("A lab ID as 'lab_id' to update must be provided")
+        data = {}
+        if name is not None:
+            data["name"] = name
+        if description is not None:
+            data["description"] = description
+        if not data:
+            self.clnt.log.warning("No parameters provided to update for lab with ID %s", lab_id)
+            return None
+        return self.clnt.patch(f"/labs/{lab_id}", data=data, timeout=timeout)
 
     def delete_lab(self, lab_id, timeout=30):
         """Delete a lab by ID.
