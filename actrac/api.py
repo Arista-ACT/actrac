@@ -58,7 +58,7 @@ class ACTAPI:
         page_size=200,
         timeout=30,
     ):
-        """Read all objects for provided URL with provided params using pageSize to poll.
+        """Read all objects for provided URL via polling pageSize using provided params.
 
         :param timeout: Timeout for API call.
         :return: list of dicts of all objects information.
@@ -93,15 +93,6 @@ class ACTAPI:
             # Adjust the offset to the next page
             offset += page_size
         return objects
-
-    def available_node_versions(self, timeout=30):
-        """:return: dict of available versions per node type.
-
-        :param timeout: Timeout for API call.
-        :return: list of dicts of operations information.
-        Example resp - {...}
-        """
-        return self.clnt.get("/topologies/nodes", timeout=timeout)
 
     def read_operations(self, offset=0, page_size=200, timeout=30):
         """Read status of all operations.
@@ -166,6 +157,15 @@ class ACTAPI:
         op_id = operation.get("id")
         self.clnt.log.info("Poll operation %s - %s", op_id, operation.get("operation_type"))
         return self.poll_operation_by_id(op_id, poll_iterations, poll_sleep, request_timeout)
+
+    def available_node_versions(self, timeout=30):
+        """:return: dict of available versions per node type.
+
+        :param timeout: Timeout for API call.
+        :return: list of dicts of operations information.
+        Example resp - {...}
+        """
+        return self.clnt.get("/topologies/nodes", timeout=timeout)
 
     def read_topology(self, topology_definition_id=None, timeout=30):
         """Read topology.
@@ -347,7 +347,7 @@ class ACTAPI:
 
         :param name: name of lab to create.
         :param description: description of new lab
-        :param topo_def: topology file path name. 'file_pathname' param from topology data.
+        :param topo_def: topology file name. 'file_pathname' param from topology data.
         :param timeout: Timeout for API call.
         :return: dict of resp/results.
         Example resp - {...}
