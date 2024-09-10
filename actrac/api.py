@@ -489,7 +489,7 @@ class ACTAPI:
             params["last_name"] = last_name
         if email_addr:
             params["email_addr"] = email_addr
-        if group_id:
+        if group_id is not None:
             if not isinstance(group_id, int):
                 raise ACTRESTAPIError("Invalid 'group_id' type. Must be an integer")
             params["group_id"] = group_id
@@ -505,6 +505,96 @@ class ACTAPI:
                 self.clnt.log.error("read_users: Invalid status type - %s:%s", status, type(status))
                 return None
         return self._read_all_via_paging("/users", params, offset, page_size, timeout)
+
+    def create_user(  # noqa: PLR0913
+        self,
+        user_name,
+        password,
+        group_id,
+        first_name=None,
+        last_name=None,
+        email_address=None,
+        timeout=30,
+    ):
+        """Create a user.
+
+        :param user_name: user name for new user being created.
+        :param password: password for new user being created.
+        :param group_id: ...
+        :param first_name: ...
+        :param last_name: ...
+        :param email_address: ...
+        :param timeout: Timeout for API call.
+        :return: dict of resp/results.
+        Example resp - {...}
+        """
+        if not user_name:
+            raise ACTRESTAPIError("A 'user_name' for the user must be provided")
+        if not password:
+            raise ACTRESTAPIError("A 'password' for the user must be provided")
+        if group_id is None:
+            raise ACTRESTAPIError("A 'group_id' for the user must be provided")
+        elif not isinstance(group_id, int):
+            raise ACTRESTAPIError("Invalid 'group_id' type. Must be an integer")
+
+        data = {"user_name": user_name, "password": password, "group_id": group_id}
+        if first_name is not None:
+            data["first_name"] = first_name
+        if last_name is not None:
+            data["last_name"] = last_name
+        if email_address is not None:
+            data["email_address"] = email_address
+        return self.clnt.post("/users", data=data, timeout=timeout)
+
+    def update_user(  # noqa: PLR0913
+        self,
+        user_id,
+        first_name=None,
+        last_name=None,
+        email_address=None,
+        group_id=None,
+        timeout=30,
+    ):
+        """Update a user.
+
+        :param user_id: User ID of user to update.
+        :param first_name: new first name to update for the provided user ID.
+        :param last_name: new last name to update for the provided user ID.
+        :param email_address: new email address to update for provided user ID.
+        :param group_id: new group ID to update for provided user ID.
+        :param timeout: Timeout for API call.
+        :return: dict of resp/results.
+        Example resp - {...}
+        """
+        if not user_id:
+            raise ACTRESTAPIError("A user ID as 'user_id' to update must be provided")
+        data = {}
+        if first_name is not None:
+            data["first_name"] = first_name
+        if last_name is not None:
+            data["last_name"] = last_name
+        if email_address is not None:
+            data["email_address"] = email_address
+        if group_id is not None:
+            if not isinstance(group_id, int):
+                raise ACTRESTAPIError("Invalid 'group_id' type. Must be an integer")
+            data["group_id"] = group_id
+        if not data:
+            self.clnt.log.warning("No parameters provided to update for user with ID %s", user_id)
+            return None
+        return self.clnt.patch(f"/users/{user_id}", data=data, timeout=timeout)
+
+    def delete_user(self, user_id, timeout=30):
+        """Delete a user by ID.
+
+        :param user_id: ID of user to delete.
+        :param timeout: Timeout for API call.
+        :return: dict of resp/results.
+        Example resp - {...}
+        """
+        if not user_id:
+            raise ACTRESTAPIError("A valid 'user_id' must be provided")
+        return self.clnt.delete(f"/users/{user_id}", timeout=timeout)
 
     def read_groups(self, offset=0, page_size=200, timeout=30):
         """Read all groups.
