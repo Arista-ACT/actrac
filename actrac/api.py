@@ -489,7 +489,7 @@ class ACTAPI:
             params["last_name"] = last_name
         if email_addr:
             params["email_addr"] = email_addr
-        if group_id is not None:
+        if group_id:
             if not isinstance(group_id, int):
                 raise ACTRESTAPIError("Invalid 'group_id' type. Must be an integer")
             params["group_id"] = group_id
@@ -536,6 +536,8 @@ class ACTAPI:
             raise ACTRESTAPIError("A 'group_id' for the user must be provided")
         elif not isinstance(group_id, int):
             raise ACTRESTAPIError("Invalid 'group_id' type. Must be an integer")
+        elif group_id == 0:
+            raise ACTRESTAPIError("'group_id' can not be 0.")
 
         data = {"user_name": user_name, "password": password, "group_id": group_id}
         if first_name is not None:
@@ -578,6 +580,8 @@ class ACTAPI:
         if group_id is not None:
             if not isinstance(group_id, int):
                 raise ACTRESTAPIError("Invalid 'group_id' type. Must be an integer")
+            if group_id == 0:
+                raise ACTRESTAPIError("'group_id' can not be 0.")
             data["group_id"] = group_id
         if not data:
             self.clnt.log.warning("No parameters provided to update for user with ID %s", user_id)
