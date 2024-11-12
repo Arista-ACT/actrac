@@ -39,7 +39,7 @@ import sys
 import httpx
 
 from actrac.api import ACTAPI
-from actrac.constants import ACT_REST_API_BASE_URL
+from actrac.constants import ACT_REST_API_BASE_URL, ACT_REST_API_PATH
 from actrac.errors import ACTRESTAPIError
 
 
@@ -49,7 +49,6 @@ class ACTClient:
     def __init__(  # noqa: PLR0913
         self,
         api_key,
-        https=False,
         base_url=None,
         cert=False,
         log_file=None,
@@ -59,9 +58,7 @@ class ACTClient:
         """Initialize the client.
 
         :param api_key: key for authentication.
-        :param https: connect to ACT via HTTPS instead of OVPN.
         :param base_url: The base of the URL used for REST API requests.
-        Tenant as a string.
         :param cert: Verify certificate. Default False.
         :param log_file: file to write log messages to as string.
         :param log_level: logging level as string.
@@ -69,8 +66,8 @@ class ACTClient:
         """
         self.api_key = api_key
         self.token = None
-        self.https = https
         self.base_url = base_url or ACT_REST_API_BASE_URL
+        self.full_url = f"{self.base_url}{ACT_REST_API_PATH}"
         self.cert = cert
         self.log = logging.getLogger("actrac")
         self.configure_log(log_file, log_level, log_stdout)
@@ -137,7 +134,7 @@ class ACTClient:
         :return: access token as string for success.
         """
         # Authenticate with ACT and return the token
-        url = f"{self.base_url}/auth/login"
+        url = f"{self.full_url}/auth/login"
         # Form the headers and data for the request
         headers = {"content-type": "application/json"}
         data = {"api_key": self.api_key}
@@ -162,7 +159,7 @@ class ACTClient:
         self.token = self.get_access_token()
         self.headers = {"content-type": "application/json", "Authorization": f"Bearer {self.token}"}
         self.client = httpx.Client(
-            base_url=self.base_url, headers=self.headers, timeout=timeout, verify=self.cert
+            base_url=self.full_url, headers=self.headers, timeout=timeout, verify=self.cert
         )
 
     def disconnect(self, timeout=30):
