@@ -9,7 +9,7 @@ mypy:
 	$${HOME}/.local/bin/poetry run mypy actrac/
 
 unittest:
-	$${HOME}/.local/bin/poetry run pytest --cov=actrac test/unit/
+	$${HOME}/.local/bin/poetry run pytest --cov=actrac --cov-report=term-missing test/unit/
 
 install-deps:
 	curl -sSL https://install.python-poetry.org/ | python3 -
