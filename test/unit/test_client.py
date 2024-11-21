@@ -30,12 +30,99 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-
 import logging
 import os
 
+import httpx
+import pytest
+
 from actrac.client import ACTClient
 from actrac.constants import ACT_REST_API_BASE_URL, ACT_REST_API_PATH
+from actrac.errors import ACTRESTAPIError
+
+
+class MockHttpxResponseValid:
+    def __init__(self):
+        self.url = "MOCKURL"
+        self.status_code = httpx.codes.OK
+
+    @staticmethod
+    def raise_for_status():
+        return None
+
+    @staticmethod
+    def json():
+        return {"data": "data"}
+
+
+class MockHttpxResponseNotOK:
+    def __init__(self):
+        self.url = "MOCKURL"
+        self.status_code = httpx.codes.NOT_FOUND
+
+    @staticmethod
+    def raise_for_status():
+        return None
+
+    @staticmethod
+    def json():
+        return {"data": "data"}
+
+
+class MockHttpxResponseInvalidJSON:
+    def __init__(self):
+        self.url = "MOCKURL"
+        self.status_code = httpx.codes.OK
+
+    @staticmethod
+    def raise_for_status():
+        return None
+
+    @staticmethod
+    def json():
+        raise Exception("MOCK JSON DECODE ERROR")
+
+
+class MockHttpxResponseRaiseUncaughtException:
+    def __init__(self):
+        self.url = "MOCKURL"
+        self.status_code = httpx.codes.OK
+
+    @staticmethod
+    def raise_for_status():
+        raise Exception("UNCAUGHT EXCEPTION")
+
+    @staticmethod
+    def json():
+        return {"data": "data"}
+
+
+class MockHttpxGoodTokenResponse:
+    def __init__(self):
+        self.url = "MOCKURL"
+        self.status_code = httpx.codes.OK
+
+    @staticmethod
+    def raise_for_status():
+        return None
+
+    @staticmethod
+    def json():
+        return {"token": "mocktoken"}
+
+
+class MockHttpxNoTokenResponse:
+    def __init__(self):
+        self.url = "MOCKURL"
+        self.status_code = httpx.codes.OK
+
+    @staticmethod
+    def raise_for_status():
+        return None
+
+    @staticmethod
+    def json():
+        return {"token": None}
 
 
 class TestACTClient:
@@ -95,3 +182,61 @@ class TestACTClient:
             os.remove("run_unittests.log")
         except OSError:
             pass
+
+    def test_client_validate_response(self):
+        clnt = ACTClient(api_key="TEST")
+        assert clnt.api_key == "TEST"
+        resp = MockHttpxResponseValid()
+        data = clnt._validate_response(resp)
+        assert data == {"data": "data"}
+
+    def test_client_validate_response_none(self):
+        clnt = ACTClient(api_key="TEST")
+        assert clnt.api_key == "TEST"
+        data = clnt._validate_response(None)
+        assert data == {}
+
+    def test_client_validate_response_not_ok(self):
+        clnt = ACTClient(api_key="TEST")
+        assert clnt.api_key == "TEST"
+        resp = MockHttpxResponseNotOK()
+        data = clnt._validate_response(resp)
+        assert data == {}
+
+    def test_client_validate_response_invalid_json(self):
+        clnt = ACTClient(api_key="TEST")
+        assert clnt.api_key == "TEST"
+        resp = MockHttpxResponseInvalidJSON()
+        data = clnt._validate_response(resp)
+        assert data == {}
+
+    def test_client_validate_response_uncaught_exception(self):
+        clnt = ACTClient(api_key="TEST")
+        assert clnt.api_key == "TEST"
+        resp = MockHttpxResponseRaiseUncaughtException()
+        with pytest.raises(Exception):
+            clnt._validate_response(resp)
+
+    def test_client_get_access_token(self, monkeypatch):
+        def mock_httpx_post(*args, **kwargs):
+            return MockHttpxGoodTokenResponse()
+
+        # Mock httpx.post for get_access_token
+        monkeypatch.setattr(httpx, "post", mock_httpx_post)
+
+        clnt = ACTClient(api_key="TEST")
+        assert clnt.api_key == "TEST"
+        token = clnt.get_access_token()
+        assert token == "mocktoken"
+
+    def test_client_get_access_token_no_token(self, monkeypatch):
+        def mock_httpx_post(*args, **kwargs):
+            return MockHttpxNoTokenResponse()
+
+        # Mock httpx.post for get_access_token
+        monkeypatch.setattr(httpx, "post", mock_httpx_post)
+
+        clnt = ACTClient(api_key="TEST")
+        assert clnt.api_key == "TEST"
+        with pytest.raises(ACTRESTAPIError):
+            clnt.get_access_token()
