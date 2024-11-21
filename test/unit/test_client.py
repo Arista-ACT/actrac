@@ -44,7 +44,7 @@ class TestACTClient:
     def test_client_init(self):
         clnt = ACTClient(api_key="TEST")
         assert clnt.api_key == "TEST"
-        assert clnt.token == None
+        assert clnt.token is None
         assert clnt.base_url == ACT_REST_API_BASE_URL
         assert clnt.full_url == f"{ACT_REST_API_BASE_URL}{ACT_REST_API_PATH}"
         assert clnt.cert is False
@@ -54,7 +54,7 @@ class TestACTClient:
     def test_client_init_invalid_log_level(self):
         clnt = ACTClient(api_key="TEST", log_level="INVALID")
         assert clnt.api_key == "TEST"
-        assert clnt.token == None
+        assert clnt.token is None
         assert clnt.base_url == ACT_REST_API_BASE_URL
         assert clnt.full_url == f"{ACT_REST_API_BASE_URL}{ACT_REST_API_PATH}"
         assert clnt.cert is False
@@ -64,7 +64,7 @@ class TestACTClient:
     def test_client_init_valid_log_level(self):
         clnt = ACTClient(api_key="TEST", log_level="DEBUG")
         assert clnt.api_key == "TEST"
-        assert clnt.token == None
+        assert clnt.token is None
         assert clnt.base_url == ACT_REST_API_BASE_URL
         assert clnt.full_url == f"{ACT_REST_API_BASE_URL}{ACT_REST_API_PATH}"
         assert clnt.cert is False
@@ -74,7 +74,7 @@ class TestACTClient:
     def test_client_init_log_stdout(self):
         clnt = ACTClient(api_key="TEST", log_stdout=True)
         assert clnt.api_key == "TEST"
-        assert clnt.token == None
+        assert clnt.token is None
         assert clnt.base_url == ACT_REST_API_BASE_URL
         assert clnt.full_url == f"{ACT_REST_API_BASE_URL}{ACT_REST_API_PATH}"
         assert clnt.cert is False
@@ -84,7 +84,7 @@ class TestACTClient:
     def test_client_init_log_file(self):
         clnt = ACTClient(api_key="TEST", log_file="run_unittests.log")
         assert clnt.api_key == "TEST"
-        assert clnt.token == None
+        assert clnt.token is None
         assert clnt.base_url == ACT_REST_API_BASE_URL
         assert clnt.full_url == f"{ACT_REST_API_BASE_URL}{ACT_REST_API_PATH}"
         assert clnt.cert is False
