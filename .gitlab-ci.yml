@@ -1,0 +1,71 @@
+image: python:3.10-bullseye
+
+stages:
+  - lint
+  - test
+#  - build
+#  - deploy
+
+lint-job:
+  stage: lint
+  allow_failure: true
+  script:
+    - pip install --upgrade pip
+    - pip install poetry
+    - poetry config virtualenvs.in-project true
+    - poetry install
+    - source `poetry env info --path`/bin/activate
+    - pip list
+    - make lint
+
+unittest-job:
+  stage: test
+  artifacts:
+    paths:
+      - coverage.xml
+      - results.xml
+    reports:
+      junit: results.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+    expire_in: "30 days"
+  allow_failure: true
+  coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
+  script:
+    - pip install --upgrade pip
+    - pip install poetry
+    - poetry config virtualenvs.in-project true
+    - poetry install
+    - source `poetry env info --path`/bin/activate
+    - pip list
+    - pytest --durations=0 --cov --cov-report term --cov-report xml:coverage.xml --junitxml=results.xml test/unit
+
+# build-job:
+#   stage: build
+#   artifacts:
+#     paths:
+#       - "dist/actrac_*"
+#     expire_in: "30 days"
+#   script:
+#     - pip install poetry
+#     - poetry config virtualenvs.in-project true
+#     - poetry install
+#     - source `poetry env info --path`/bin/activate
+#     - poetry version $(git describe --tags --abbrev=0)
+#     - poetry build
+
+# deploy-job:
+#   stage: deploy
+#   dependencies:
+#     - build-job
+#   only:
+#     - tags
+#   script:
+#     - pip install poetry
+#     - poetry config virtualenvs.in-project true
+#     - poetry install
+#     - source `poetry env info --path`/bin/activate
+#     - echo $CI_PROJECT_ID
+#     - TWINE_PASSWORD=${CI_JOB_TOKEN} TWINE_USERNAME=gitlab-ci-token python -m twine upload --verbose --repository-url ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi dist/*
+#   allow_failure: true
