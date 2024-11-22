@@ -1,15 +1,15 @@
 lint:
-	$${HOME}/.local/bin/poetry run ruff check actrac/ test/
+	$${HOME}/.local/bin/poetry run ruff check actrac/ test/ examples/
 
 format:
-	$${HOME}/.local/bin/poetry run ruff check --fix actrac/ test/
-	$${HOME}/.local/bin/poetry run black actrac/ test/
+	$${HOME}/.local/bin/poetry run ruff check --fix actrac/ test/ examples/
+	$${HOME}/.local/bin/poetry run black actrac/ test/ examples/
 
 mypy:
-	$${HOME}/.local/bin/poetry run mypy actrac/
+	$${HOME}/.local/bin/poetry run mypy actrac/ examples/
 
 unittest:
-	$${HOME}/.local/bin/poetry run pytest --cov=actrac test/unit/
+	$${HOME}/.local/bin/poetry run pytest --cov=actrac --cov-report=term-missing test/unit/
 
 install-deps:
 	curl -sSL https://install.python-poetry.org/ | python3 -

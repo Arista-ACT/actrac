@@ -31,24 +31,24 @@ spinning them down or destroying them after the tests have completed.
 
 ## Installation
 
-The source code for the actrac library is provided via IT Gitlab at
+The source code for the ACTRAC library is provided via IT Gitlab at
 <https://gitlab.aristanetworks.com/arista-eosplus/ACT/actrac>.
 All current development is done via the develop branch. Stable released versions are tagged in the master branch and uploaded to the IT Gitlab registry:
 pip install <https://gitlab.aristanetworks.com/arista-eosplus/ACT/actrac/-/packages>
 
 ### Installing Package
 
-The library is published as a python pacakge on gitlab. For many usecases, installing the python package is easier to do an maintain then installin from source code.
+The library is published as a python pacakge on gitlab. For many use cases, installing the python package is easier to do and maintain then installin from source code.
 
 Instructions are displayed within the gitlab package registery page : <https://gitlab.aristanetworks.com/arista-eosplus/ACT/actrac/-/packages/>
 
 ### Development: Run from Source
 
-We recommend running the actrac library in a Python Poetry virtual
+We recommend running the ACTRAC library in a Python Poetry virtual
 environment. For more information, read this:
 <https://python-poetry.org/docs/>
 
-These instructions will help you install and run the actrac library
+These instructions will help you install and run the ACTRAC library
 from source. This is useful if you plan on contributing or if you would always
 like to see the latest code in the develop branch. Note that these steps
 require the poetry and git commands.
@@ -57,7 +57,7 @@ require the poetry and git commands.
 
     <https://python-poetry.org/docs/#installation>
 
-#### Step 1: Clone the actrac library IT Gitlab repo
+#### Step 1: Clone the ACTRAC library IT Gitlab repo
 
     # Go to a directory where you'd like to keep the source
     admin:~ admin$ cd ~/projects
@@ -84,7 +84,7 @@ require the poetry and git commands.
     # Install
     admin:~ admin$ poetry install
 
-#### Step 4: Install actrac library development requirements
+#### Step 4: Install ACTRAC library development requirements
 
     No different from standard poetry install currently.
 
@@ -106,12 +106,32 @@ profile before running any scripts that will interact with the ACT API.
 
 Connect using OpenVPN Client using the appropriate profile.
 
+### API KEY
+
+To use the ACT API you will need to generate an API KEY for authenticating the API requests.
+Generate this key using the ACT UI after logging in using existing ACT credentials.
+
 ### Examples
 
 Example connecting to the ACT API and getting all available versions:
 
     >>> from actrac.client import ACTClient
-    >>> client = ACTClient(log_stdout=True)
+    >>> client = ACTClient(api_key="EXAMPLE", log_stdout=True)
+    >>> client.connect(username, password)
+    >>> result = client.api.available_node_versions()
+    >>> print result
+    {...large output omitted...}
+    >>>
+
+Example connecting to the ACT API and getting all available versions for a HTTPS Tenant:
+
+    >>> from actrac.client import ACTClient
+
+    # The default base_url is lab.act.arista.com which is the standard for OVPN Tenants.
+    # For HTTPS Tenants it will be important to provide the HTTPS Tenant specific base_url
+    # as shown below.
+
+    >>> client = ACTClient(api_key="EXAMPLE", base_url="example.act.arista.com", log_stdout=True)
     >>> client.connect(username, password)
     >>> result = client.api.available_node_versions()
     >>> print result
@@ -121,7 +141,7 @@ Example connecting to the ACT API and getting all available versions:
 Example connecting to the ACT API and getting all labs:
 
     >>> from actrac.client import ACTClient
-    >>> client = ACTClient(log_stdout=True)
+    >>> client = ACTClient(api_key="EXAMPLE", log_stdout=True)
     >>> client.connect(username, password)
     >>> result = client.api.read_labs()
     >>> print result
@@ -131,7 +151,7 @@ Example connecting to the ACT API and getting all labs:
 Example connecting to the ACT API and attempting to start a lab and wait for it to be running:
 
     >>> from actrac.client import ACTClient
-    >>> client = ACTClient(log_stdout=True)
+    >>> client = ACTClient(api_key="EXAMPLE", log_stdout=True)
     >>> client.connect(username, password)
     >>> result = client.api.read_lab_by_name("EXAMPLE LAB")
     >>> lab_id = result["lab_id"]
@@ -147,7 +167,7 @@ Some notes...
 ## Testing
 
 The actrac library contains system tests.
-To run the system tests, you will need to update the `actrac_system_tets.yaml`
+To run the system tests, you will need to update the `actrac_systest.yaml
 file found in test/fixtures.
 
 Requirements for running the system tests:
