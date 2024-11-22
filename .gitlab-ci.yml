@@ -1,4 +1,17 @@
-image: python:3.10-bullseye
+image: python:3.10-slim
+
+.anchors:
+    - &required_packages
+      apt-get update &&
+      apt-get install -y libffi-dev
+      libssl-dev
+      make
+      git
+      gcc
+      wget curl python3-dev &&
+      pip3 install --upgrade pip
+    - &install_deps
+      make install-deps
 
 stages:
   - lint
@@ -6,40 +19,24 @@ stages:
 #  - build
 #  - deploy
 
-lint-job:
+ruff:
   stage: lint
-  allow_failure: true
+  before_script:
+     - *required_packages
+     - *install_deps
   script:
-    - pip install --upgrade pip
-    - pip install poetry
-    - poetry config virtualenvs.in-project true
-    - poetry install
-    - source `poetry env info --path`/bin/activate
-    - pip list
     - make lint
 
-unittest-job:
+unittest:
   stage: test
-  artifacts:
-    paths:
-      - coverage.xml
-      - results.xml
-    reports:
-      junit: results.xml
-      coverage_report:
-        coverage_format: cobertura
-        path: coverage.xml
-    expire_in: "30 days"
-  allow_failure: true
-  coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
+  coverage: '/^TOTAL.+?(\d+\%)$/'
+  dependencies:
+    - ruff
+  before_script:
+     - *required_packages
+     - *install_deps
   script:
-    - pip install --upgrade pip
-    - pip install poetry
-    - poetry config virtualenvs.in-project true
-    - poetry install
-    - source `poetry env info --path`/bin/activate
-    - pip list
-    - pytest --durations=0 --cov --cov-report term --cov-report xml:coverage.xml --junitxml=results.xml test/unit
+    - make unittest
 
 # build-job:
 #   stage: build
