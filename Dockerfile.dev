@@ -1,0 +1,35 @@
+# Copyright (c) 2020 Arista Networks, Inc.  All rights reserved.
+# Arista Networks, Inc. Confidential and Proprietary.
+
+FROM python:3.10.1-alpine3.14 AS release
+LABEL maintainer="ACT Dev"
+
+RUN apk update && \
+    apk add --no-cache \
+    bash \
+    gcc \
+    make \
+    jq \
+    openssl \
+    curl
+
+RUN rm -rf /tmp/* && \
+    rm -rf /var/cache/apk/* && \
+    rm -rf /var/tmp/*
+
+# Create the /project directory and add it as a mountpoint
+WORKDIR /actrac-dev
+VOLUME ["/actrac-dev"]
+
+#COPY requirements.txt ./requirements.txt
+#COPY requirements-dev.txt ./requirements-dev.txt
+
+# Install python modules required by the repo
+RUN pip3 install httpx
+
+RUN echo 'PS1="\[\e[0;33m\](\u@actrac-dev)-(\w)\[\e[31m\] % \[\e[m\]"' >> ~/.bashrc
+
+CMD ["bash"]
+# Run the following commands in the repo root to build and start the dev container:
+# $ docker build -t actrac-dev:latest -f Dockerfile.dev .
+# $ docker run -it --rm --volume "$(pwd):/actrac-dev" actrac-dev
