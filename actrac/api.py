@@ -36,6 +36,7 @@ import time
 
 import yaml
 
+from datetime import datetime
 from actrac.constants import LAB_STATE_STR_TO_INT_MAP
 from actrac.errors import ACTRESTAPIError
 
@@ -608,3 +609,78 @@ class ACTAPI:
         Example resp - {...}
         """
         return self._read_all_via_paging("/groups", None, offset, page_size, timeout)
+
+    def create_api_key_for(self, user_id, description, expiration_date, timeout=30):
+        """Creates an API key for a user.
+
+        ** Need Admin Role to use this functionality **
+
+        :param user_id (int): Users Id.
+        :param description (str): API Key Description.
+        :param expiration_date (datetime): API Key Expiration Date.
+        :param timeout: Timeout for API call.
+        :return: dict Operation Record.
+        Example resp - {...}
+        """
+        if not user_id:
+            raise ACTRESTAPIError("A user ID as 'user_id' to create an API key must be provided")
+        else:
+            if not isinstance(user_id, int):
+                raise ACTRESTAPIError("Invalid 'user_id' type. Must be an integer")
+
+        if not description:
+            raise ACTRESTAPIError("A description as 'description' to create an API key must be provided")
+        else:
+            if not isinstance(description, str):
+                raise ACTRESTAPIError("Invalid 'description' type. Must be an string")
+
+        if not expiration_date:
+            raise ACTRESTAPIError("An expiration date as 'expiration_date' to create an API key must be provided")
+        else:
+            if not isinstance(expiration_date, datetime):
+                raise ACTRESTAPIError("Invalid 'expiration_date' type. Must be a datetime")
+
+        data = {
+            "user_id": user_id,
+            "description": description,t
+            "expiration_date": expiration_date.strftime("%d-%m-%Y")
+        }
+
+        return self.clnt.post("/auth/apikey", data=data, timeout)
+
+    def delete_api_key_for(self, id, timeout=30):
+        """Deletes an API key for a user.
+
+        ** Need Admin Role to use this functionality **
+
+        :param id: API key 'id' field.
+        :param timeout: Timeout for API call.
+        :return: dict with 'id' field of deleted api key.
+        Example resp - {...}
+        """
+        if not id:
+            raise ACTRESTAPIError("An API key 'id' as 'id' to delete an API key must be provided")
+        else:
+            if not isinstance(id, int):
+                raise ACTRESTAPIError("Invalid 'id' type. Must be an integer")
+
+        return self.clnt.delete(f"/auth/apikey/{id}", None, offset, page_size, timeout)
+
+
+    def list_api_keys_for(self, user_id, timeout=30):
+        """Lists API keys for a user.
+
+        ** Need Admin Role to use this functionality **
+
+        :param timeout: Timeout for API call.
+        :return: list of dicts of all groups information.
+        Example resp - {...}
+        """
+
+        if not user_id:
+            raise ACTRESTAPIError("A user ID as 'user_id' to list a user's API keys must be provided")
+        else:
+            if not isinstance(user_id, int):
+                raise ACTRESTAPIError("Invalid 'user_id' type. Must be an integer")
+
+        return self.clnt.get(f"/auth/apikey?&user_id={user_id}", timeout)
