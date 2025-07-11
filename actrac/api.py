@@ -672,6 +672,7 @@ class ACTAPI:
 
         ** Need Admin Role to use this functionality **
 
+        :param user_id: User Id.
         :param timeout: Timeout for API call.
         :return: list of dicts of all groups information.
         Example resp - {...}
