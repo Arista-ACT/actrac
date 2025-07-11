@@ -684,4 +684,4 @@ class ACTAPI:
             if not isinstance(user_id, int):
                 raise ACTRESTAPIError("Invalid 'user_id' type. Must be an integer")
 
-        return self.clnt.get(f"/auth/apikey?&user_id={user_id}", timeout=timeout
+        return self.clnt.get(f"/auth/apikey?&user_id={user_id}", timeout=timeout)
