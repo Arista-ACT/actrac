@@ -642,7 +642,7 @@ class ACTAPI:
             "description": description,
             "exp_date": expiration_date.strftime("%d-%m-%Y")
         }
-        print(data)
+
         return self.clnt.post("/auth/apikey", data=data, timeout=timeout)
 
     def delete_api_key_for(self, key_id, timeout=30):
@@ -652,7 +652,7 @@ class ACTAPI:
 
         :param id: API key 'id' field.
         :param timeout: Timeout for API call.
-        :return: dict with 'id' field of deleted api key.
+        :return: dict Operation Record.
         Example resp - {...}
         """
         if not key_id:
@@ -670,7 +670,7 @@ class ACTAPI:
 
         :param user_id: User Id.
         :param timeout: Timeout for API call.
-        :return: list of dicts of all groups information.
+        :return: list of dicts of all API keys for provided user information.
         Example resp - {...}
         """
         if not user_id:
