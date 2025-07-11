@@ -611,7 +611,7 @@ class ACTAPI:
         return self._read_all_via_paging("/groups", None, offset, page_size, timeout)
 
     def create_api_key_for(self, user_id, description, expiration_date, timeout=30):
-        """Creates an API key for a user.
+        """Create an API key for a user.
 
         ** Need Admin Role to use this functionality **
 
@@ -624,32 +624,29 @@ class ACTAPI:
         """
         if not user_id:
             raise ACTRESTAPIError("A user ID as 'user_id' to create an API key must be provided")
-        else:
-            if not isinstance(user_id, int):
-                raise ACTRESTAPIError("Invalid 'user_id' type. Must be an integer")
+        elif not isinstance(user_id, int):
+            raise ACTRESTAPIError("Invalid 'user_id' type. Must be an integer")
 
         if not description:
             raise ACTRESTAPIError("A description as 'description' to create an API key must be provided")
-        else:
-            if not isinstance(description, str):
-                raise ACTRESTAPIError("Invalid 'description' type. Must be an string")
+        elif not isinstance(description, str):
+            raise ACTRESTAPIError("Invalid 'description' type. Must be an string")
 
         if not expiration_date:
             raise ACTRESTAPIError("An expiration date as 'expiration_date' to create an API key must be provided")
-        else:
-            if not isinstance(expiration_date, datetime):
-                raise ACTRESTAPIError("Invalid 'expiration_date' type. Must be a datetime")
+        elif not isinstance(expiration_date, datetime):
+            raise ACTRESTAPIError("Invalid 'expiration_date' type. Must be a datetime")
 
         data = {
             "user_id": user_id,
             "description": description,
-            "expiration_date": expiration_date.strftime("%d-%m-%Y")
+            "exp_date": expiration_date.strftime("%d-%m-%Y")
         }
-
-        return self.clnt.post("/auth/apikey", data=data, timeout)
+        print(data)
+        return self.clnt.post("/auth/apikey", data=data, timeout=timeout)
 
     def delete_api_key_for(self, key_id, timeout=30):
-        """Deletes an API key for a user.
+        """Delete an API key for a user.
 
         ** Need Admin Role to use this functionality **
 
@@ -660,15 +657,14 @@ class ACTAPI:
         """
         if not key_id:
             raise ACTRESTAPIError("An API key 'id' as 'key_id' to delete an API key must be provided")
-        else:
-            if not isinstance(id, int):
-                raise ACTRESTAPIError("Invalid 'key_id' type. Must be an integer")
+        elif not isinstance(key_id, int):
+            raise ACTRESTAPIError("Invalid 'key_id' type. Must be an integer")
 
         return self.clnt.delete(f"/auth/apikey/{key_id}", timeout=timeout)
 
 
     def list_api_keys_for(self, user_id, timeout=30):
-        """Lists API keys for a user.
+        """List API keys for a user.
 
         ** Need Admin Role to use this functionality **
 
@@ -677,11 +673,9 @@ class ACTAPI:
         :return: list of dicts of all groups information.
         Example resp - {...}
         """
-
         if not user_id:
             raise ACTRESTAPIError("A user ID as 'user_id' to list a user's API keys must be provided")
-        else:
-            if not isinstance(user_id, int):
-                raise ACTRESTAPIError("Invalid 'user_id' type. Must be an integer")
+        elif not isinstance(user_id, int):
+            raise ACTRESTAPIError("Invalid 'user_id' type. Must be an integer")
 
         return self.clnt.get(f"/auth/apikey?&user_id={user_id}", timeout=timeout)
