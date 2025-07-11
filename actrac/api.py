@@ -642,13 +642,13 @@ class ACTAPI:
 
         data = {
             "user_id": user_id,
-            "description": description,t
+            "description": description,
             "expiration_date": expiration_date.strftime("%d-%m-%Y")
         }
 
         return self.clnt.post("/auth/apikey", data=data, timeout)
 
-    def delete_api_key_for(self, id, timeout=30):
+    def delete_api_key_for(self, key_id, timeout=30):
         """Deletes an API key for a user.
 
         ** Need Admin Role to use this functionality **
@@ -658,13 +658,13 @@ class ACTAPI:
         :return: dict with 'id' field of deleted api key.
         Example resp - {...}
         """
-        if not id:
-            raise ACTRESTAPIError("An API key 'id' as 'id' to delete an API key must be provided")
+        if not key_id:
+            raise ACTRESTAPIError("An API key 'id' as 'key_id' to delete an API key must be provided")
         else:
             if not isinstance(id, int):
-                raise ACTRESTAPIError("Invalid 'id' type. Must be an integer")
+                raise ACTRESTAPIError("Invalid 'key_id' type. Must be an integer")
 
-        return self.clnt.delete(f"/auth/apikey/{id}", timeout=timeout)
+        return self.clnt.delete(f"/auth/apikey/{key_id}", timeout=timeout)
 
 
     def list_api_keys_for(self, user_id, timeout=30):
