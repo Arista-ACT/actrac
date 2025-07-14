@@ -1,3 +1,5 @@
+export POETRY_VERSION="v1.8.4"
+
 lint:
 	$${HOME}/.local/bin/poetry run ruff check actrac/ test/ examples/
 
@@ -12,11 +14,11 @@ unittest:
 	$${HOME}/.local/bin/poetry run pytest --cov=actrac --cov-report=term-missing test/unit/
 
 install-deps:
-	curl -sSL https://install.python-poetry.org/ | python3 -
+	curl -sSL https://install.python-poetry.org/ | python3 - --version 1.8.4
 	$${HOME}/.local/bin/poetry config experimental.system-git-client true
-	$${HOME}/.local/bin/poetry install
+	$${HOME}/.local/bin/poetry install 
 
 install-deps-prod:
-	curl -sSL https://install.python-poetry.org/ | python3 -
+	curl -sSL https://install.python-poetry.org/ | python3 - --version 1.8.4
 	$${HOME}/.local/bin/poetry config experimental.system-git-client true
 	$${HOME}/.local/bin/poetry install --without dev
