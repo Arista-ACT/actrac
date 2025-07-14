@@ -33,10 +33,10 @@
 """API wrapper functions for interacting with the ACT REST API."""
 
 import time
+from datetime import datetime
 
 import yaml
 
-from datetime import datetime
 from actrac.constants import LAB_STATE_STR_TO_INT_MAP
 from actrac.errors import ACTRESTAPIError
 
@@ -628,12 +628,14 @@ class ACTAPI:
             raise ACTRESTAPIError("Invalid 'user_id' type. Must be an integer")
 
         if not description:
-            raise ACTRESTAPIError("A description as 'description' to create an API key must be provided")
+            raise ACTRESTAPIError("A description as 'description' " \
+            "to create an API key must be provided")
         elif not isinstance(description, str):
             raise ACTRESTAPIError("Invalid 'description' type. Must be an string")
 
         if not expiration_date:
-            raise ACTRESTAPIError("An expiration date as 'expiration_date' to create an API key must be provided")
+            raise ACTRESTAPIError("An expiration date as 'expiration_date' to create" \ 
+            " an API key must be provided")
         elif not isinstance(expiration_date, datetime):
             raise ACTRESTAPIError("Invalid 'expiration_date' type. Must be a datetime")
 
@@ -656,7 +658,8 @@ class ACTAPI:
         Example resp - {...}
         """
         if not key_id:
-            raise ACTRESTAPIError("An API key 'id' as 'key_id' to delete an API key must be provided")
+            raise ACTRESTAPIError("An API key 'id' as 'key_id' to delete an" \  
+            " API key must be provided")
         elif not isinstance(key_id, int):
             raise ACTRESTAPIError("Invalid 'key_id' type. Must be an integer")
 
@@ -674,7 +677,8 @@ class ACTAPI:
         Example resp - {...}
         """
         if not user_id:
-            raise ACTRESTAPIError("A user ID as 'user_id' to list a user's API keys must be provided")
+            raise ACTRESTAPIError("A user ID as 'user_id' to list a user's API" \ 
+            "keys must be provided")
         elif not isinstance(user_id, int):
             raise ACTRESTAPIError("Invalid 'user_id' type. Must be an integer")
 
