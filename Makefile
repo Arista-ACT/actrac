@@ -1,5 +1,3 @@
-export POETRY_VERSION="v1.8.4"
-
 lint:
 	$${HOME}/.local/bin/poetry run ruff check actrac/ test/ examples/
 
