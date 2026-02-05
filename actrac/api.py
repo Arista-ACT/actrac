@@ -348,7 +348,7 @@ class ACTAPI:
 
         :param name: name of lab to create.
         :param description: description of new lab
-        :param topo_def: topology file name. 'file_pathname' param from topology data.
+        :param topo_def: topology file name. 'topology_pathname' param from topology data.
         :param timeout: Timeout for API call.
         :return: dict of resp/results.
         Example resp - {...}
