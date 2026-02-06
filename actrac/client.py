@@ -35,6 +35,7 @@
 import json
 import logging
 import sys
+from urllib.parse import urlparse, urlunparse
 
 import httpx
 
@@ -72,8 +73,11 @@ class ACTClient:
         # after the .com.
         if not base_url.startswith("https://"):
             base_url = f"https://{base_url}"
-        self.base_url = base_url.removesuffix(ACT_REST_API_PATH)
-        self.full_url = f"{self.base_url}{ACT_REST_API_PATH}"
+        parsed_url = urlparse(base_url, scheme="https")
+        self.base_url = urlunparse(parsed_url._replace(path="", params="", query="", fragment=""))
+        self.full_url = urlunparse(
+            parsed_url._replace(path=ACT_REST_API_PATH, params="", query="", fragment="")
+        )
         self.cert = cert
         self.log = logging.getLogger("actrac")
         self.configure_log(log_file, log_level, log_stdout)
