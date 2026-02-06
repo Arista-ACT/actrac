@@ -38,7 +38,7 @@ pip install <https://gitlab.aristanetworks.com/arista-eosplus/ACT/actrac/-/packa
 
 ### Installing Package
 
-The library is published as a python pacakge on gitlab. For many use cases, installing the python package is easier to do and maintain then installin from source code.
+The library is published as a python pacakge on gitlab. For many use cases, installing the python package is easier to do and maintain then installing from source code.
 
 Instructions are displayed within the gitlab package registery page : <https://gitlab.aristanetworks.com/arista-eosplus/ACT/actrac/-/packages/>
 
@@ -116,7 +116,7 @@ Generate this key using the ACT UI after logging in using existing ACT credentia
 Example connecting to the ACT API and getting all available versions:
 
     >>> from actrac.client import ACTClient
-    >>> client = ACTClient(api_key="EXAMPLE", log_stdout=True)
+    >>> client = ACTClient(api_key="EXAMPLE", base_url="https://lab.act.arista.com", log_stdout=True)
     >>> client.connect(username, password)
     >>> result = client.api.available_node_versions()
     >>> print result
@@ -126,11 +126,6 @@ Example connecting to the ACT API and getting all available versions:
 Example connecting to the ACT API and getting all available versions for a HTTPS Tenant:
 
     >>> from actrac.client import ACTClient
-
-    # The default base_url is lab.act.arista.com which is the standard for OVPN Tenants.
-    # For HTTPS Tenants it will be important to provide the HTTPS Tenant specific base_url
-    # as shown below.
-
     >>> client = ACTClient(api_key="EXAMPLE", base_url="example.act.arista.com", log_stdout=True)
     >>> client.connect(username, password)
     >>> result = client.api.available_node_versions()
@@ -141,7 +136,7 @@ Example connecting to the ACT API and getting all available versions for a HTTPS
 Example connecting to the ACT API and getting all labs:
 
     >>> from actrac.client import ACTClient
-    >>> client = ACTClient(api_key="EXAMPLE", log_stdout=True)
+    >>> client = ACTClient(api_key="EXAMPLE", base_url="https://lab.act.arista.com", log_stdout=True)
     >>> client.connect(username, password)
     >>> result = client.api.read_labs()
     >>> print result
@@ -151,7 +146,7 @@ Example connecting to the ACT API and getting all labs:
 Example connecting to the ACT API and attempting to start a lab and wait for it to be running:
 
     >>> from actrac.client import ACTClient
-    >>> client = ACTClient(api_key="EXAMPLE", log_stdout=True)
+    >>> client = ACTClient(api_key="EXAMPLE", base_url="lab.act.arista.com", log_stdout=True)
     >>> client.connect(username, password)
     >>> result = client.api.read_lab_by_name("EXAMPLE LAB")
     >>> lab_id = result["lab_id"]

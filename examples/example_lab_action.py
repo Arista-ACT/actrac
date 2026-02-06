@@ -45,7 +45,12 @@ def parseargs():
         "--api_key", dest="api_key", required=True, action="store", help="ACT REST API KEY"
     )
     parser.add_argument(
-        "--base_url", dest="base_url", required=False, action="store", help="Tenant base URL"
+        "--base_url",
+        dest="base_url",
+        required=True,
+        action="store",
+        default="https://lab.act.arista.com",
+        help="Tenant base URL",
     )
     parser.add_argument(
         "--topology_definition",

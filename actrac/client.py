@@ -39,7 +39,7 @@ import sys
 import httpx
 
 from actrac.api import ACTAPI
-from actrac.constants import ACT_REST_API_BASE_URL, ACT_REST_API_PATH
+from actrac.constants import ACT_REST_API_PATH
 from actrac.errors import ACTRESTAPIError
 
 
@@ -49,7 +49,7 @@ class ACTClient:
     def __init__(  # noqa: PLR0913
         self,
         api_key,
-        base_url=None,
+        base_url,
         cert=False,
         log_file=None,
         log_level="INFO",
@@ -59,6 +59,7 @@ class ACTClient:
 
         :param api_key: key for authentication.
         :param base_url: The base of the URL used for REST API requests.
+            Example: https://lab.act.arista.com
         :param cert: Verify certificate. Default False.
         :param log_file: file to write log messages to as string.
         :param log_level: logging level as string.
@@ -66,7 +67,7 @@ class ACTClient:
         """
         self.api_key = api_key
         self.token = None
-        self.base_url = base_url or ACT_REST_API_BASE_URL
+        self.base_url = base_url
         self.full_url = f"{self.base_url}{ACT_REST_API_PATH}"
         self.cert = cert
         self.log = logging.getLogger("actrac")

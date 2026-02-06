@@ -32,7 +32,6 @@
 
 """ACT REST API Client Constants."""
 
-ACT_REST_API_BASE_URL = "https://lab.act.arista.com"
 ACT_REST_API_PATH = "/rest/v1"
 
 OPERATIONS_VALID_STATES = {
