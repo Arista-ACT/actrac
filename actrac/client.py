@@ -59,7 +59,7 @@ class ACTClient:
 
         :param api_key: key for authentication.
         :param base_url: The base of the URL used for REST API requests.
-            Example: https://lab.act.arista.com
+            Example: https://lab.act.arista.com or lab.act.arista.com
         :param cert: Verify certificate. Default False.
         :param log_file: file to write log messages to as string.
         :param log_level: logging level as string.
@@ -67,7 +67,12 @@ class ACTClient:
         """
         self.api_key = api_key
         self.token = None
-        self.base_url = base_url
+        # format base_url into expected style before setting.
+        # Expected format is with https:// at the beginning and no path formatting
+        # after the .com.
+        if not base_url.startswith("https://"):
+            base_url = f"https://{base_url}"
+        self.base_url = base_url.removesuffix(ACT_REST_API_PATH)
         self.full_url = f"{self.base_url}{ACT_REST_API_PATH}"
         self.cert = cert
         self.log = logging.getLogger("actrac")

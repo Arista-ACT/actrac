@@ -140,6 +140,26 @@ class TestACTClient:
         assert clnt.client is None
         assert clnt.log.level == logging.INFO
 
+    def test_client_init_base_url_has_no_https(self):
+        clnt = ACTClient(api_key="TEST", base_url="lab.act.arista.com")
+        assert clnt.api_key == "TEST"
+        assert clnt.token is None
+        assert clnt.base_url == TEST_ACT_REST_API_BASE_URL
+        assert clnt.full_url == f"{TEST_ACT_REST_API_BASE_URL}{ACT_REST_API_PATH}"
+        assert clnt.cert is False
+        assert clnt.client is None
+        assert clnt.log.level == logging.INFO
+
+    def test_client_init_base_url_trim_rest_path(self):
+        clnt = ACTClient(api_key="TEST", base_url="lab.act.arista.com/rest/v1")
+        assert clnt.api_key == "TEST"
+        assert clnt.token is None
+        assert clnt.base_url == TEST_ACT_REST_API_BASE_URL
+        assert clnt.full_url == f"{TEST_ACT_REST_API_BASE_URL}{ACT_REST_API_PATH}"
+        assert clnt.cert is False
+        assert clnt.client is None
+        assert clnt.log.level == logging.INFO
+
     def test_client_init_invalid_log_level(self):
         clnt = ACTClient(api_key="TEST", base_url=TEST_ACT_REST_API_BASE_URL, log_level="INVALID")
         assert clnt.api_key == "TEST"

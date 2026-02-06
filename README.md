@@ -136,7 +136,7 @@ Example connecting to the ACT API and getting all available versions for a HTTPS
 Example connecting to the ACT API and getting all labs:
 
     >>> from actrac.client import ACTClient
-    >>> client = ACTClient(api_key="EXAMPLE", base_url="https://lab.act.arista.com", log_stdout=True)
+    >>> client = ACTClient(api_key="EXAMPLE", base_url="lab.act.arista.com", log_stdout=True)
     >>> client.connect(username, password)
     >>> result = client.api.read_labs()
     >>> print result

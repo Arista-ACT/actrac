@@ -50,7 +50,7 @@ def parseargs():
         dest="base_url",
         required=True,
         action="store",
-        default="https://lab.act.arista.com",
+        default="lab.act.arista.com",
         help="Tenant base URL",
     )
     parser.add_argument(
