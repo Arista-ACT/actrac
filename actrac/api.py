@@ -628,21 +628,23 @@ class ACTAPI:
             raise ACTRESTAPIError("Invalid 'user_id' type. Must be an integer")
 
         if not description:
-            raise ACTRESTAPIError("A description as 'description' " \
-            "to create an API key must be provided")
+            raise ACTRESTAPIError(
+                "A description as 'description' to create an API key must be provided"
+            )
         elif not isinstance(description, str):
             raise ACTRESTAPIError("Invalid 'description' type. Must be an string")
 
         if not expiration_date:
-            raise ACTRESTAPIError("An expiration date as 'expiration_date' to create" \
-            " an API key must be provided")
+            raise ACTRESTAPIError(
+                "An expiration date as 'expiration_date' to create an API key must be provided"
+            )
         elif not isinstance(expiration_date, datetime):
             raise ACTRESTAPIError("Invalid 'expiration_date' type. Must be a datetime")
 
         data = {
             "user_id": user_id,
             "description": description,
-            "exp_date": expiration_date.strftime("%d-%m-%Y")
+            "exp_date": expiration_date.strftime("%d-%m-%Y"),
         }
 
         return self.clnt.post("/auth/apikey", data=data, timeout=timeout)
@@ -658,13 +660,13 @@ class ACTAPI:
         Example resp - {...}
         """
         if not key_id:
-            raise ACTRESTAPIError("An API key 'id' as 'key_id' to delete an" \
-            " API key must be provided")
+            raise ACTRESTAPIError(
+                "An API key 'id' as 'key_id' to delete an API key must be provided"
+            )
         elif not isinstance(key_id, int):
             raise ACTRESTAPIError("Invalid 'key_id' type. Must be an integer")
 
         return self.clnt.delete(f"/auth/apikey/{key_id}", timeout=timeout)
-
 
     def list_api_keys_for(self, user_id, timeout=30):
         """List API keys for a user.
@@ -677,8 +679,9 @@ class ACTAPI:
         Example resp - {...}
         """
         if not user_id:
-            raise ACTRESTAPIError("A user ID as 'user_id' to list a user's API" \
-            "keys must be provided")
+            raise ACTRESTAPIError(
+                "A user ID as 'user_id' to list a user's API keys must be provided"
+            )
         elif not isinstance(user_id, int):
             raise ACTRESTAPIError("Invalid 'user_id' type. Must be an integer")
 

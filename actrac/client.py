@@ -34,12 +34,13 @@
 
 import json
 import logging
+import re
 import sys
 
 import httpx
 
 from actrac.api import ACTAPI
-from actrac.constants import ACT_REST_API_BASE_URL, ACT_REST_API_PATH
+from actrac.constants import ACT_REST_API_PATH
 from actrac.errors import ACTRESTAPIError
 
 
@@ -49,7 +50,7 @@ class ACTClient:
     def __init__(  # noqa: PLR0913
         self,
         api_key,
-        base_url=None,
+        base_url,
         cert=False,
         log_file=None,
         log_level="INFO",
@@ -59,6 +60,7 @@ class ACTClient:
 
         :param api_key: key for authentication.
         :param base_url: The base of the URL used for REST API requests.
+            Example: https://lab.act.arista.com or lab.act.arista.com
         :param cert: Verify certificate. Default False.
         :param log_file: file to write log messages to as string.
         :param log_level: logging level as string.
@@ -66,7 +68,24 @@ class ACTClient:
         """
         self.api_key = api_key
         self.token = None
-        self.base_url = base_url or ACT_REST_API_BASE_URL
+        # ^               : Start of the string
+        # (https://)?     : Capturing group 1 for optional 'https://'
+        # (?:[a-zA-Z0-9-]+\.)+ : Non-capturing group for REQUIRED tenant ID portion.
+        #                        Matches alphanumeric/hyphen followed by a MANDATORY dot.
+        # key\.blah\.com  : Literal match for the required suffix.
+        # $               : End of string (ensures no path exists)
+        valid_url_pattern = re.compile(r"^(https://)?(?:[a-zA-Z0-9-]+\.)+act\.arista\.com$")
+        match = valid_url_pattern.match(base_url)
+        if not match:
+            err_str = (
+                f"Invalid base_url: {base_url}. Use format "
+                "https://<tenant identifier>.act.arista.com or <tenant identifier>.act.arista.com"
+            )
+            raise ACTRESTAPIError(err_str)
+        # Add https:// if not already in base_url
+        if not match.group(1):
+            base_url = f"https://{base_url}"
+        self.base_url = base_url
         self.full_url = f"{self.base_url}{ACT_REST_API_PATH}"
         self.cert = cert
         self.log = logging.getLogger("actrac")
