@@ -34,8 +34,8 @@
 
 import json
 import logging
+import re
 import sys
-from urllib.parse import urlparse, urlunparse
 
 import httpx
 
@@ -68,16 +68,25 @@ class ACTClient:
         """
         self.api_key = api_key
         self.token = None
-        # format base_url into expected style before setting.
-        # Expected format is with https:// at the beginning and no path formatting
-        # after the .com.
-        if not base_url.startswith("https://"):
+        # ^               : Start of the string
+        # (https://)?     : Capturing group 1 for optional 'https://'
+        # (?:[a-zA-Z0-9-]+\.)+ : Non-capturing group for REQUIRED tenant ID portion.
+        #                        Matches alphanumeric/hyphen followed by a MANDATORY dot.
+        # key\.blah\.com  : Literal match for the required suffix.
+        # $               : End of string (ensures no path exists)
+        valid_url_pattern = re.compile(r"^(https://)?(?:[a-zA-Z0-9-]+\.)+act\.arista\.com$")
+        match = valid_url_pattern.match(base_url)
+        if not match:
+            err_str = (
+                f"Invalid base_url: {base_url}. Use format "
+                "https://<tenant identifier>.act.arista.com or <tenant identifier>.act.arista.com"
+            )
+            raise ACTRESTAPIError(err_str)
+        # Add https:// if not already in base_url
+        if not match.group(1):
             base_url = f"https://{base_url}"
-        parsed_url = urlparse(base_url, scheme="https")
-        self.base_url = urlunparse(parsed_url._replace(path="", params="", query="", fragment=""))
-        self.full_url = urlunparse(
-            parsed_url._replace(path=ACT_REST_API_PATH, params="", query="", fragment="")
-        )
+        self.base_url = base_url
+        self.full_url = f"{self.base_url}{ACT_REST_API_PATH}"
         self.cert = cert
         self.log = logging.getLogger("actrac")
         self.configure_log(log_file, log_level, log_stdout)
