@@ -18,4 +18,3 @@ logs/
 # Environment
 .env
 set_env.sh
-poetry.lock
