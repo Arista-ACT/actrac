@@ -117,7 +117,7 @@ Example connecting to the ACT API and getting all available versions:
     {...large output omitted...}
     >>>
 
-Example connecting to the ACT API and getting all available versions for a HTTPS Tenant ():
+Example connecting to the ACT API and getting all available versions for a HTTPS Tenant:
 
     >>> from actrac.client import ACTClient
     >>> client = ACTClient(api_key="EXAMPLE", base_url="https://<tenant identifier>.act.arista.com", log_stdout=True)
