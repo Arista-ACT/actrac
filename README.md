@@ -160,7 +160,7 @@ to verify interaction with your ACT Tenant via ACTRAC.
 
 There are also unittests for the client that are maintained by the ACT development team.
 
-Additionally any external contribution must containe appropriate unittests.
+Additionally any external contribution must contain appropriate unittests.
 
 ## Contact or Questions
 
