@@ -20,9 +20,9 @@
 
 ## Overview
 
-This module provides a Python REST API Client for interfacing with the ACT REAST API.
-This can be used for spinning up ACT environments to run tests against and then
-spinning them down or destroying them after the tests have completed.
+This module provides a Python client for interfacing with the ACT REST API.
+This can be used for spinning up (deploying/starting) ACT environments to run tests against
+and then spinning them down (undeploying/stopping) after the tests have completed.
 
 ### Requirements
 
@@ -31,20 +31,14 @@ spinning them down or destroying them after the tests have completed.
 
 ## Installation
 
-The source code for the ACTRAC library is provided via IT Gitlab at
-<https://gitlab.aristanetworks.com/arista-eosplus/ACT/actrac>.
-All current development is done via the develop branch. Stable released versions are tagged in the master branch and uploaded to the IT Gitlab registry:
-pip install <https://gitlab.aristanetworks.com/arista-eosplus/ACT/actrac/-/packages>
 
 ### Installing Package
 
-The library is published as a python pacakge on gitlab. For many use cases, installing the python package is easier to do and maintain then installing from source code.
-
-Instructions are displayed within the gitlab package registery page : <https://gitlab.aristanetworks.com/arista-eosplus/ACT/actrac/-/packages/>
+The library is published as a python pacakge on PyPi and installable via pip.
 
 ### Development: Run from Source
 
-We recommend running the ACTRAC library in a Python Poetry virtual
+You can also run the ACTRAC library in a Python Poetry virtual
 environment. For more information, read this:
 <https://python-poetry.org/docs/>
 
@@ -57,11 +51,11 @@ require the poetry and git commands.
 
     <https://python-poetry.org/docs/#installation>
 
-#### Step 1: Clone the ACTRAC library IT Gitlab repo
+#### Step 1: Clone the ACTRAC library from Github repo
 
     # Go to a directory where you'd like to keep the source
     admin:~ admin$ cd ~/projects
-    admin:~ admin$ git clone https://gitlab.aristanetworks.com/arista-eosplus/ACT/actrac.git
+    admin:~ admin$ git clone https://github.com/Arista-ACT/ACTRAC.git
     admin:~ admin$ cd actrac
 
 #### Step 2: Check out the desired version or branch
@@ -74,7 +68,7 @@ require the poetry and git commands.
     admin:~ admin$ git branch
 
     # Checkout the desired version of code
-    admin:~ admin$ git checkout v0.9.0
+    admin:~ admin$ git checkout v0.2.0
 
 #### Step 3: Install actrac library using Poetry
 
@@ -123,10 +117,10 @@ Example connecting to the ACT API and getting all available versions:
     {...large output omitted...}
     >>>
 
-Example connecting to the ACT API and getting all available versions for a HTTPS Tenant:
+Example connecting to the ACT API and getting all available versions for a HTTPS Tenant ():
 
     >>> from actrac.client import ACTClient
-    >>> client = ACTClient(api_key="EXAMPLE", base_url="example.act.arista.com", log_stdout=True)
+    >>> client = ACTClient(api_key="EXAMPLE", base_url="https://<tenant identifier>.act.arista.com", log_stdout=True)
     >>> client.connect(username, password)
     >>> result = client.api.available_node_versions()
     >>> print result
@@ -157,23 +151,16 @@ Example connecting to the ACT API and attempting to start a lab and wait for it 
 
 ## Notes
 
-Some notes...
+...
 
 ## Testing
 
-The actrac library contains system tests.
-To run the system tests, you will need to update the `actrac_systest.yaml
-file found in test/fixtures.
+Currently there are a couple of example scripts in the ./examples directory that can be used
+to verify interaction with your ACT Tenant via ACTRAC.
 
-Requirements for running the system tests:
+There are also unittests for the client that are maintained by the ACT development team.
 
-- Need access to an ACT Tenant and a valid username/password that can be used
-  to run the tests. Ideally this username/password is one that is unique for
-  running the system tests.
-
-To run the system tests:
-
-- run `make systests` from the root of the actrac folder.
+Additionally any external contribution must containe appropriate unittests.
 
 ## Contact or Questions
 
@@ -271,7 +258,7 @@ For example:
 
 ## License
 
-Copyright© 2024, Arista Networks, Inc. All rights reserved.
+Copyright© 2026, Arista Networks, Inc. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
