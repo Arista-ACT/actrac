@@ -55,7 +55,7 @@ require the poetry and git commands.
 
     # Go to a directory where you'd like to keep the source
     admin:~ admin$ cd ~/projects
-    admin:~ admin$ git clone https://github.com/Arista-ACT/ACTRAC.git
+    admin:~ admin$ git clone https://github.com/Arista-ACT/actrac.git
     admin:~ admin$ cd actrac
 
 #### Step 2: Check out the desired version or branch
