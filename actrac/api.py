@@ -193,6 +193,15 @@ class ACTAPI:
     ):
         """Read all topologies.
 
+        :param offset: Index to start at when paging through responses.
+        :param page_size: Size of results in each query when paging.
+        :param name: Name of topology. This field will match partial strings.
+                     Example: 'topo' will match 'topology'.
+        :param user: User who created and owns the topology. This field will match partial strings.
+                     Example: 'user' will match 'user1' and 'user2' etc...
+        :param topology_file: Topology file name. This field will match partial strings.
+        :param diagram_file: Diagram file name. This field will match partial strings.
+        :param device_count: Number of devices in topology file.
         :param timeout: Timeout for API call.
         :return: dict of all topologies information.
         Example resp - {...}
