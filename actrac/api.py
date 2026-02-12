@@ -61,6 +61,10 @@ class ACTAPI:
     ):
         """Read all objects for provided URL via polling pageSize using provided params.
 
+        :param api_endpoint: API endpoint for which paging will be done. Example: /topologies.
+        :param params: Filtering parameters for paging query.
+        :param offset: Index to start at when paging through responses.
+        :param page_size: Size of results in each query when paging.
         :param timeout: Timeout for API call.
         :return: list of dicts of all objects information.
         Example resp - {...}
@@ -98,6 +102,8 @@ class ACTAPI:
     def read_operations(self, offset=0, page_size=200, timeout=30):
         """Read status of all operations.
 
+        :param offset: Index to start at when paging through responses.
+        :param page_size: Size of results in each query when paging.
         :param timeout: Timeout for API call.
         :return: list of dicts of operations information.
         Example resp - {...}
@@ -107,6 +113,7 @@ class ACTAPI:
     def read_operation(self, op_id, timeout=30):
         """Read status of an operation by its ID.
 
+        :param op_id: An operation ID.
         :param timeout: Timeout for API call.
         :return: dict of operation information.
         Example resp - {...}
@@ -115,13 +122,13 @@ class ACTAPI:
             raise ACTRESTAPIError("A 'op_id' must be provided")
         return self.clnt.get(f"/operations/{op_id}", timeout=timeout)
 
-    def poll_operation_by_id(self, op_id, poll_iterations=5, poll_sleep=20, request_timeout=30):
+    def poll_operation_by_id(self, op_id, poll_iterations=5, poll_sleep=20, timeout=30):
         """Poll provided operation ID for provided iterations with provided sleep.
 
         :param op_id: An operation ID.
         :param poll_iterations: ...
         :param poll_sleep: ...
-        :param request_timeout: Timeout for individual operation API calls.
+        :param timeout: Timeout for individual operation API calls.
         :return: dict of operation information or None.
         Example resp - {...}
         """
@@ -130,7 +137,7 @@ class ACTAPI:
         resp = None
         for index in range(poll_iterations):
             self.clnt.log.info("Operation check iteration %s", index + 1)
-            resp = self.read_operation(op_id, timeout=request_timeout)
+            resp = self.read_operation(op_id, timeout=timeout)
             self.clnt.log.info(resp)
             if resp["is_completed"]:
                 self.clnt.log.info("Operation completed with status - %s", resp["status"])
@@ -138,13 +145,13 @@ class ACTAPI:
             time.sleep(poll_sleep)
         return resp
 
-    def poll_operation(self, operation, poll_iterations=5, poll_sleep=20, request_timeout=30):
+    def poll_operation(self, operation, poll_iterations=5, poll_sleep=20, timeout=30):
         """Poll provided operation for provided iterations with provided sleep.
 
         :param operation: An operation object.
         :param poll_iterations: ...
         :param poll_sleep: ...
-        :param request_timeout: Timeout for individual operation API calls.
+        :param timeout: Timeout for individual operation API calls.
         :return: dict of operation information or None.
         Example resp - {...}
         """
@@ -157,7 +164,7 @@ class ACTAPI:
             )
         op_id = operation.get("id")
         self.clnt.log.info("Poll operation %s - %s", op_id, operation.get("operation_type"))
-        return self.poll_operation_by_id(op_id, poll_iterations, poll_sleep, request_timeout)
+        return self.poll_operation_by_id(op_id, poll_iterations, poll_sleep, timeout)
 
     def available_node_versions(self, timeout=30):
         """:return: dict of available versions per node type.
@@ -231,8 +238,9 @@ class ACTAPI:
         """Create a topology.
 
         :param name: name of topology to create.
-        :param description: description of new topology
         :param topo_def_file_path: path to topology file.
+        :param description: description of new topology.
+        :param diagram_file_path: path to diagram file.
         :param timeout: Timeout for API call.
         :return: dict of resp/results.
         Example resp - {...}
@@ -264,8 +272,8 @@ class ACTAPI:
 
         :param topo_id: topology ID of topology to update.
         :param name: new name to update for the provided topology ID.
-        :param description: new description to update for provided topology ID
         :param topo_def_file_path: new topology file path to update for provided topology ID.
+        :param description: new description to update for provided topology ID
         :param diagram_file_path: new diagram file to update for provided topology ID.
         :param timeout: Timeout for API call.
         :return: dict of resp/results.
@@ -327,6 +335,12 @@ class ACTAPI:
     ):
         """Read all labs.
 
+        :param offset: Index to start at when paging through responses.
+        :param page_size: Size of results in each query when paging.
+        :param name: Name of lab.
+        :param user: User who created and owns the lab.
+        :param topology_definition: Topology file name.
+        :param state: State of lab.
         :param timeout: Timeout for API call.
         :return: dict of all labs information.
         Example resp - {...}
@@ -485,6 +499,14 @@ class ACTAPI:
     ):
         """Read all users.
 
+        :param offset: Index to start at when paging through responses.
+        :param page_size: Size of results in each query when paging.
+        :param user_name: Filter users by user name.
+        :param first_name: Filter users by first name.
+        :param last_name: Filter users by last name.
+        :param email_addr: Filter users by email address.
+        :param group_id: filter users by group ID.
+        :param status: filter users by status.
         :param timeout: Timeout for API call.
         :return: list of dicts of all users information.
         Example resp - {...}
@@ -530,10 +552,10 @@ class ACTAPI:
 
         :param user_name: user name for new user being created.
         :param password: password for new user being created.
-        :param group_id: ...
-        :param first_name: ...
-        :param last_name: ...
-        :param email_address: ...
+        :param group_id: group ID for new user being created.
+        :param first_name: first name of new user being created.
+        :param last_name: last name of new user being created.
+        :param email_address: email address of new user being created.
         :param timeout: Timeout for API call.
         :return: dict of resp/results.
         Example resp - {...}
@@ -613,6 +635,8 @@ class ACTAPI:
     def read_groups(self, offset=0, page_size=200, timeout=30):
         """Read all groups.
 
+        :param offset: Index to start at when paging through responses.
+        :param page_size: Size of results in each query when paging.
         :param timeout: Timeout for API call.
         :return: list of dicts of all groups information.
         Example resp - {...}
@@ -663,7 +687,7 @@ class ACTAPI:
 
         ** Need Admin Role to use this functionality **
 
-        :param id: API key 'id' field.
+        :param key_id: API key 'id' field.
         :param timeout: Timeout for API call.
         :return: dict Operation Record.
         Example resp - {...}
