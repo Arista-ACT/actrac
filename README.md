@@ -31,7 +31,6 @@ and then spinning them down (undeploying/stopping) after the tests have complete
 
 ## Installation
 
-
 ### Installing Package
 
 The library is published as a python pacakge on PyPi and installable via pip.
@@ -148,10 +147,6 @@ Example connecting to the ACT API and attempting to start a lab and wait for it 
     >>> client.loop.run_until_complete(client.api.deploy_lab_wait_for_running(lab_id))
     {...}
     >>>
-
-## Notes
-
-...
 
 ## Testing
 

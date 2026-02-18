@@ -4,6 +4,15 @@ version = "0.2.0"
 description = "Library for interacting with ACT REST API"
 authors = ["Arista Cloud Test Development <act-dev@arista.com>"]
 readme = "README.md"
+license = "BSD-3-Clause"
+classifiers = [
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Networking",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators"
+]
 packages = [{include = "actrac"}]
 
 [tool.poetry.dependencies]
