@@ -75,9 +75,12 @@ jobs:
         src: ./actrac
 
   unit-test:
+    strategy:
+      matrix:
+        pyver: [10, 11, 12, 13, 14]
     needs:
       - prepare
-    name: Unit Test
+    name: Unit Test (Python 3.${{matrix.pyver}})
     runs-on: ubuntu-latest
 
     steps:
@@ -93,7 +96,8 @@ jobs:
           gcp-access-token: ${{ secrets.GCP_AUTH_TOKEN }}
           gcloud-version: ${{ env.GCLOUD_VERSION }}
           gcp-ar-keyring-version: ${{ env.GCP_AR_PYTHON_KEYRING_VER }}
-          python-version-file: pyproject.toml
+          # python-version-file: pyproject.toml
+          python-version: '3.${{ matrix.pyver }}'
           ref: ${{ needs.prepare.outputs.ref }}
 
       - name: Run unit tests
