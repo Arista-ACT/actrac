@@ -57,10 +57,14 @@ class ACTAPI:
         params=None,
         offset=0,
         page_size=200,
-        timeout=30,
+        timeout=90,
     ):
         """Read all objects for provided URL via polling pageSize using provided params.
 
+        :param api_endpoint: API endpoint for which paging will be done. Example: /topologies.
+        :param params: Filtering parameters for paging query.
+        :param offset: Index to start at when paging through responses.
+        :param page_size: Size of results in each query when paging.
         :param timeout: Timeout for API call.
         :return: list of dicts of all objects information.
         Example resp - {...}
@@ -95,18 +99,21 @@ class ACTAPI:
             offset += page_size
         return objects
 
-    def read_operations(self, offset=0, page_size=200, timeout=30):
+    def read_operations(self, offset=0, page_size=200, timeout=90):
         """Read status of all operations.
 
+        :param offset: Index to start at when paging through responses.
+        :param page_size: Size of results in each query when paging.
         :param timeout: Timeout for API call.
         :return: list of dicts of operations information.
         Example resp - {...}
         """
         return self._read_all_via_paging("/operations", None, offset, page_size, timeout)
 
-    def read_operation(self, op_id, timeout=30):
+    def read_operation(self, op_id, timeout=90):
         """Read status of an operation by its ID.
 
+        :param op_id: An operation ID.
         :param timeout: Timeout for API call.
         :return: dict of operation information.
         Example resp - {...}
@@ -115,13 +122,13 @@ class ACTAPI:
             raise ACTRESTAPIError("A 'op_id' must be provided")
         return self.clnt.get(f"/operations/{op_id}", timeout=timeout)
 
-    def poll_operation_by_id(self, op_id, poll_iterations=5, poll_sleep=20, request_timeout=30):
+    def poll_operation_by_id(self, op_id, poll_iterations=5, poll_sleep=20, timeout=90):
         """Poll provided operation ID for provided iterations with provided sleep.
 
         :param op_id: An operation ID.
         :param poll_iterations: ...
         :param poll_sleep: ...
-        :param request_timeout: Timeout for individual operation API calls.
+        :param timeout: Timeout for individual operation API calls.
         :return: dict of operation information or None.
         Example resp - {...}
         """
@@ -130,7 +137,7 @@ class ACTAPI:
         resp = None
         for index in range(poll_iterations):
             self.clnt.log.info("Operation check iteration %s", index + 1)
-            resp = self.read_operation(op_id, timeout=request_timeout)
+            resp = self.read_operation(op_id, timeout=timeout)
             self.clnt.log.info(resp)
             if resp["is_completed"]:
                 self.clnt.log.info("Operation completed with status - %s", resp["status"])
@@ -138,13 +145,13 @@ class ACTAPI:
             time.sleep(poll_sleep)
         return resp
 
-    def poll_operation(self, operation, poll_iterations=5, poll_sleep=20, request_timeout=30):
+    def poll_operation(self, operation, poll_iterations=5, poll_sleep=20, timeout=90):
         """Poll provided operation for provided iterations with provided sleep.
 
         :param operation: An operation object.
         :param poll_iterations: ...
         :param poll_sleep: ...
-        :param request_timeout: Timeout for individual operation API calls.
+        :param timeout: Timeout for individual operation API calls.
         :return: dict of operation information or None.
         Example resp - {...}
         """
@@ -157,9 +164,9 @@ class ACTAPI:
             )
         op_id = operation.get("id")
         self.clnt.log.info("Poll operation %s - %s", op_id, operation.get("operation_type"))
-        return self.poll_operation_by_id(op_id, poll_iterations, poll_sleep, request_timeout)
+        return self.poll_operation_by_id(op_id, poll_iterations, poll_sleep, timeout)
 
-    def available_node_versions(self, timeout=30):
+    def available_node_versions(self, timeout=90):
         """:return: dict of available versions per node type.
 
         :param timeout: Timeout for API call.
@@ -168,7 +175,7 @@ class ACTAPI:
         """
         return self.clnt.get("/topologies/nodes", timeout=timeout)
 
-    def read_topology(self, topology_definition_id=None, timeout=30):
+    def read_topology(self, topology_definition_id=None, timeout=90):
         """Read topology.
 
         :param topology_definition_id: ID of topology to read.
@@ -189,10 +196,19 @@ class ACTAPI:
         topology_file=None,
         diagram_file=None,
         device_count=None,
-        timeout=30,
+        timeout=90,
     ):
         """Read all topologies.
 
+        :param offset: Index to start at when paging through responses.
+        :param page_size: Size of results in each query when paging.
+        :param name: Name of topology. This field will match partial strings.
+                     Example: 'topo' will match 'topology'.
+        :param user: User who created and owns the topology. This field will match partial strings.
+                     Example: 'user' will match 'user1' and 'user2' etc...
+        :param topology_file: Topology file name. This field will match partial strings.
+        :param diagram_file: Diagram file name. This field will match partial strings.
+        :param device_count: Number of devices in topology file.
         :param timeout: Timeout for API call.
         :return: dict of all topologies information.
         Example resp - {...}
@@ -217,13 +233,14 @@ class ACTAPI:
         topo_def_file_path,
         description="",
         diagram_file_path=None,
-        timeout=30,
+        timeout=90,
     ):
         """Create a topology.
 
         :param name: name of topology to create.
-        :param description: description of new topology
         :param topo_def_file_path: path to topology file.
+        :param description: description of new topology.
+        :param diagram_file_path: path to diagram file.
         :param timeout: Timeout for API call.
         :return: dict of resp/results.
         Example resp - {...}
@@ -249,14 +266,14 @@ class ACTAPI:
         topo_def_file_path=None,
         description=None,
         diagram_file_path=None,
-        timeout=30,
+        timeout=90,
     ):
         """Update a topology.
 
         :param topo_id: topology ID of topology to update.
         :param name: new name to update for the provided topology ID.
-        :param description: new description to update for provided topology ID
         :param topo_def_file_path: new topology file path to update for provided topology ID.
+        :param description: new description to update for provided topology ID
         :param diagram_file_path: new diagram file to update for provided topology ID.
         :param timeout: Timeout for API call.
         :return: dict of resp/results.
@@ -282,7 +299,7 @@ class ACTAPI:
             return None
         return self.clnt.patch(f"/topologies/{topo_id}", data=data, timeout=timeout)
 
-    def delete_topology(self, topology_definition_id=None, timeout=30):
+    def delete_topology(self, topology_definition_id=None, timeout=90):
         """Delete a topology.
 
         :param topology_definition_id: ID of topology definition to delete.
@@ -294,7 +311,7 @@ class ACTAPI:
             raise ACTRESTAPIError("A 'topology_definition_id' must be provided")
         return self.clnt.delete(f"/topologies/{topology_definition_id}", timeout=timeout)
 
-    def read_lab(self, lab_id, timeout=30):
+    def read_lab(self, lab_id, timeout=90):
         """Read a lab by ID.
 
         :param lab_id: ID of lab to get information for.
@@ -314,10 +331,16 @@ class ACTAPI:
         user=None,
         topology_definition=None,
         state=None,
-        timeout=30,
+        timeout=90,
     ):
         """Read all labs.
 
+        :param offset: Index to start at when paging through responses.
+        :param page_size: Size of results in each query when paging.
+        :param name: Name of lab.
+        :param user: User who created and owns the lab.
+        :param topology_definition: Topology file name.
+        :param state: State of lab.
         :param timeout: Timeout for API call.
         :return: dict of all labs information.
         Example resp - {...}
@@ -343,12 +366,12 @@ class ACTAPI:
                 return None
         return self._read_all_via_paging("/labs", params, offset, page_size, timeout)
 
-    def create_lab(self, name=None, description="", topo_def=None, timeout=30):
+    def create_lab(self, name=None, description="", topo_def=None, timeout=90):
         """Create a lab.
 
         :param name: name of lab to create.
         :param description: description of new lab
-        :param topo_def: topology file name. 'file_pathname' param from topology data.
+        :param topo_def: topology file name. 'topology_pathname' param from topology data.
         :param timeout: Timeout for API call.
         :return: dict of resp/results.
         Example resp - {...}
@@ -365,7 +388,7 @@ class ACTAPI:
         lab_id,
         name=None,
         description=None,
-        timeout=30,
+        timeout=90,
     ):
         """Update a lab.
 
@@ -388,7 +411,7 @@ class ACTAPI:
             return None
         return self.clnt.patch(f"/labs/{lab_id}", data=data, timeout=timeout)
 
-    def delete_lab(self, lab_id, timeout=30):
+    def delete_lab(self, lab_id, timeout=90):
         """Delete a lab by ID.
 
         :param lab_id: ID of lab to delete.
@@ -400,7 +423,7 @@ class ACTAPI:
             raise ACTRESTAPIError("A valid 'lab_id' must be provided")
         return self.clnt.delete(f"/labs/{lab_id}", timeout=timeout)
 
-    def deploy_lab(self, lab_id, timeout=30):
+    def deploy_lab(self, lab_id, timeout=90):
         """Deploy an existing lab by ID.
 
         :param lab_id: ID of lab to deploy.
@@ -412,7 +435,7 @@ class ACTAPI:
             raise ACTRESTAPIError("A valid 'lab_id' must be provided")
         return self.clnt.post(f"/labs/{lab_id}/deploy", timeout=timeout)
 
-    def undeploy_lab(self, lab_id, timeout=30):
+    def undeploy_lab(self, lab_id, timeout=90):
         """Undeploy an existing lab by ID.
 
         :param lab_id: ID of lab to undeploy.
@@ -424,7 +447,7 @@ class ACTAPI:
             raise ACTRESTAPIError("A valid 'lab_id' must be provided")
         return self.clnt.post(f"/labs/{lab_id}/undeploy", timeout=timeout)
 
-    def start_lab(self, lab_id, timeout=30):
+    def start_lab(self, lab_id, timeout=90):
         """Start an existing lab by ID.
 
         :param lab_id: ID of lab to start.
@@ -436,7 +459,7 @@ class ACTAPI:
             raise ACTRESTAPIError("A valid 'lab_id' must be provided")
         return self.clnt.post(f"/labs/{lab_id}/start", timeout=timeout)
 
-    def stop_lab(self, lab_id, timeout=30):
+    def stop_lab(self, lab_id, timeout=90):
         """Stop an existing lab by ID.
 
         :param lab_id: ID of lab to stop.
@@ -448,7 +471,7 @@ class ACTAPI:
             raise ACTRESTAPIError("A valid 'lab_id' must be provided")
         return self.clnt.post(f"/labs/{lab_id}/stop", timeout=timeout)
 
-    def read_user(self, user_id, timeout=30):
+    def read_user(self, user_id, timeout=90):
         """Read a user by ID.
 
         :param user_id: ID of user to get information for.
@@ -472,10 +495,18 @@ class ACTAPI:
         email_addr=None,
         group_id=None,
         status=None,
-        timeout=30,
+        timeout=90,
     ):
         """Read all users.
 
+        :param offset: Index to start at when paging through responses.
+        :param page_size: Size of results in each query when paging.
+        :param user_name: Filter users by user name.
+        :param first_name: Filter users by first name.
+        :param last_name: Filter users by last name.
+        :param email_addr: Filter users by email address.
+        :param group_id: filter users by group ID.
+        :param status: filter users by status.
         :param timeout: Timeout for API call.
         :return: list of dicts of all users information.
         Example resp - {...}
@@ -515,16 +546,16 @@ class ACTAPI:
         first_name=None,
         last_name=None,
         email_address=None,
-        timeout=30,
+        timeout=90,
     ):
         """Create a user.
 
         :param user_name: user name for new user being created.
         :param password: password for new user being created.
-        :param group_id: ...
-        :param first_name: ...
-        :param last_name: ...
-        :param email_address: ...
+        :param group_id: group ID for new user being created.
+        :param first_name: first name of new user being created.
+        :param last_name: last name of new user being created.
+        :param email_address: email address of new user being created.
         :param timeout: Timeout for API call.
         :return: dict of resp/results.
         Example resp - {...}
@@ -556,7 +587,7 @@ class ACTAPI:
         last_name=None,
         email_address=None,
         group_id=None,
-        timeout=30,
+        timeout=90,
     ):
         """Update a user.
 
@@ -589,7 +620,7 @@ class ACTAPI:
             return None
         return self.clnt.patch(f"/users/{user_id}", data=data, timeout=timeout)
 
-    def delete_user(self, user_id, timeout=30):
+    def delete_user(self, user_id, timeout=90):
         """Delete a user by ID.
 
         :param user_id: ID of user to delete.
@@ -601,16 +632,18 @@ class ACTAPI:
             raise ACTRESTAPIError("A valid 'user_id' must be provided")
         return self.clnt.delete(f"/users/{user_id}", timeout=timeout)
 
-    def read_groups(self, offset=0, page_size=200, timeout=30):
+    def read_groups(self, offset=0, page_size=200, timeout=90):
         """Read all groups.
 
+        :param offset: Index to start at when paging through responses.
+        :param page_size: Size of results in each query when paging.
         :param timeout: Timeout for API call.
         :return: list of dicts of all groups information.
         Example resp - {...}
         """
         return self._read_all_via_paging("/groups", None, offset, page_size, timeout)
 
-    def create_api_key_for(self, user_id, description, expiration_date, timeout=30):
+    def create_api_key_for(self, user_id, description, expiration_date, timeout=90):
         """Create an API key for a user.
 
         ** Need Admin Role to use this functionality **
@@ -628,45 +661,47 @@ class ACTAPI:
             raise ACTRESTAPIError("Invalid 'user_id' type. Must be an integer")
 
         if not description:
-            raise ACTRESTAPIError("A description as 'description' " \
-            "to create an API key must be provided")
+            raise ACTRESTAPIError(
+                "A description as 'description' to create an API key must be provided"
+            )
         elif not isinstance(description, str):
             raise ACTRESTAPIError("Invalid 'description' type. Must be an string")
 
         if not expiration_date:
-            raise ACTRESTAPIError("An expiration date as 'expiration_date' to create" \
-            " an API key must be provided")
+            raise ACTRESTAPIError(
+                "An expiration date as 'expiration_date' to create an API key must be provided"
+            )
         elif not isinstance(expiration_date, datetime):
             raise ACTRESTAPIError("Invalid 'expiration_date' type. Must be a datetime")
 
         data = {
             "user_id": user_id,
             "description": description,
-            "exp_date": expiration_date.strftime("%d-%m-%Y")
+            "exp_date": expiration_date.strftime("%d-%m-%Y"),
         }
 
         return self.clnt.post("/auth/apikey", data=data, timeout=timeout)
 
-    def delete_api_key_for(self, key_id, timeout=30):
+    def delete_api_key_for(self, key_id, timeout=90):
         """Delete an API key for a user.
 
         ** Need Admin Role to use this functionality **
 
-        :param id: API key 'id' field.
+        :param key_id: API key 'id' field.
         :param timeout: Timeout for API call.
         :return: dict Operation Record.
         Example resp - {...}
         """
         if not key_id:
-            raise ACTRESTAPIError("An API key 'id' as 'key_id' to delete an" \
-            " API key must be provided")
+            raise ACTRESTAPIError(
+                "An API key 'id' as 'key_id' to delete an API key must be provided"
+            )
         elif not isinstance(key_id, int):
             raise ACTRESTAPIError("Invalid 'key_id' type. Must be an integer")
 
         return self.clnt.delete(f"/auth/apikey/{key_id}", timeout=timeout)
 
-
-    def list_api_keys_for(self, user_id, timeout=30):
+    def list_api_keys_for(self, user_id, timeout=90):
         """List API keys for a user.
 
         ** Need Admin Role to use this functionality **
@@ -677,8 +712,9 @@ class ACTAPI:
         Example resp - {...}
         """
         if not user_id:
-            raise ACTRESTAPIError("A user ID as 'user_id' to list a user's API" \
-            "keys must be provided")
+            raise ACTRESTAPIError(
+                "A user ID as 'user_id' to list a user's API keys must be provided"
+            )
         elif not isinstance(user_id, int):
             raise ACTRESTAPIError("Invalid 'user_id' type. Must be an integer")
 

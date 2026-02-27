@@ -1,0 +1,114 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: Continuous Integration
+
+on:
+  push:
+    branches: [ develop, main ]
+  pull_request:
+    branches: [ develop, main ]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Branch name or hash to check out on build
+        required: false
+        # Defaulted to develop here as workflow_dispatch can only be triggered off the default branch, which is develop
+        default: 'develop'
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  REPOSITORY_REGION: us-west1
+  SERVICE_NAME: actrac
+  GCLOUD_VERSION: '477.0.0'
+  RUFF_VERSION: '0.8.2'
+  GCP_AR_PYTHON_KEYRING_VER: '1.1.2'
+
+  LOCAL_PUSH: false
+  ACT: false
+
+jobs:
+  # This job prepares inputs for reusable workflows later
+  # Can't use env as input for reusable workflows (why???)
+  # Need to have a job push them into it's own outputs
+  # See for details: https://stackoverflow.com/a/73305536
+  prepare:
+    name: Prepare for reusable workflows
+    runs-on: ubuntu-latest
+    outputs:
+      repository-region: ${{ steps.push-outputs.outputs.repository-region }}
+      service-name: ${{ steps.push-outputs.outputs.service-name }}
+      local-push: ${{ steps.push-outputs.outputs.local-push }}
+      gcloud-version: ${{ steps.push-outputs.outputs.gcloud-version }}
+      ref: ${{ steps.push-outputs.outputs.ref }}
+      local-run: ${{ steps.push-outputs.outputs.local-run }}
+      main-target: ${{ steps.push-outputs.outputs.main-target }}
+    steps:
+      - name: Push env vars into outputs
+        id: push-outputs
+        run: |
+          echo "repository-region=${{ env.REPOSITORY_REGION }}" >> "$GITHUB_OUTPUT"
+          echo "service-name=${{ env.SERVICE_NAME }}" >> "$GITHUB_OUTPUT"
+          echo "local-push=${{ env.LOCAL_PUSH }}" >> "$GITHUB_OUTPUT"
+          echo "gcloud-version=${{ env.GCLOUD_VERSION }}" >> "$GITHUB_OUTPUT"
+          echo "ref=${{ (!fromJSON(env.ACT) && (inputs.ref || github.ref)) || '' }}" >> "$GITHUB_OUTPUT"
+          echo "local-run=${{ env.ACT }}" >> "$GITHUB_OUTPUT"
+          echo "main-target=${{ endsWith(github.base_ref, 'main') || endsWith(github.ref, 'main') }}" >> "$GITHUB_OUTPUT"
+
+  static-analysis:
+    needs:
+      - prepare
+    name: Static Analysis
+    runs-on: ubuntu-latest
+    steps:
+    - uses: Arista-ACT/actions/magic-checkout@main
+      with:
+        ref: ${{ needs.prepare.outputs.ref }}
+
+    - name: Set up Ruff and lint
+      uses: astral-sh/ruff-action@v3
+      with:
+        version: ${{ env.RUFF_VERSION }}
+        src: ./actrac
+
+  unit-test:
+    strategy:
+      matrix:
+        pyver: [10, 11, 12, 13, 14]
+    needs:
+      - prepare
+    name: Unit Test (Python 3.${{matrix.pyver}})
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup Python Project
+        uses: Arista-ACT/actions/python/setup-project@main
+        with:
+          # Only one of these GCP secrets will be set in practice
+          # as on GitHub GCP_CREDENTIALS is an org secret and access
+          # tokens can be derived from it in-pipeline (so not passed in),
+          # but locally GCP_AUTH_TOKEN will be passed in and no
+          # credentials JSON file will be.
+          gcp-credentials: ${{ secrets.GCP_CREDENTIALS }}
+          gcp-access-token: ${{ secrets.GCP_AUTH_TOKEN }}
+          gcloud-version: ${{ env.GCLOUD_VERSION }}
+          gcp-ar-keyring-version: ${{ env.GCP_AR_PYTHON_KEYRING_VER }}
+          # python-version-file: pyproject.toml
+          python-version: '3.${{ matrix.pyver }}'
+          ref: ${{ needs.prepare.outputs.ref }}
+
+      - name: Run unit tests
+        run: poetry run pytest --log-cli-level DEBUG -cov-config=.coveragerc --cov --cov-append --cov-report xml:cov.xml --cov-report term --junitxml=result.xml -s test/unit/
+
+      - name: Produce coverage report
+        uses: Arista-ACT/actions/reports/coverage@main
+        with:
+          source: cov.xml
+
+      - name: Produce test report
+        uses: Arista-ACT/actions/reports/junit@main
+        with:
+          source: result.xml
