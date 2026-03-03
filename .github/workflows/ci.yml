@@ -33,6 +33,9 @@ jobs:
       run: pipx install poetry==1.8.3
       shell: bash
 
+    - name: Install dependencies
+      run: poetry install --no-interaction --no-root
+
     - name: Set up Ruff and lint
       uses: astral-sh/ruff-action@v3
       with:
