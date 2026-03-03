@@ -43,6 +43,13 @@ jobs:
         version: ${{ env.RUFF_VERSION }}
         src: ./actrac
 
+    - name: Run ruff with format check
+      uses: astral-sh/ruff-action@v3
+      with:
+        version: ${{ env.RUFF_VERSION }}
+        src: ./actrac
+        args: "format --check --diff"
+
     - name: Run unit tests (e.g., pytest)
       # Ensure you have pytest as a dev dependency in pyproject.toml
       run: poetry run pytest --log-cli-level DEBUG -cov-config=.coveragerc --cov --cov-append --cov-report xml:cov.xml --cov-report term --junitxml=result.xml -s test/unit/
