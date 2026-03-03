@@ -30,13 +30,9 @@ jobs:
         python-version: '3.${{ matrix.python-version }}'
         cache: 'poetry'
 
-    - name: Install Poetry
-      uses: abatilo/actions-poetry@v3
-      with:
-        poetry-version: '1.8.3'
-
-    - name: Install dependencies
-      run: poetry install --no-interaction --no-root
+    - name: Install poetry
+      run: pipx install poetry==1.8.3
+      shell: bash
 
     - name: Set up Ruff and lint
       uses: astral-sh/ruff-action@v3
