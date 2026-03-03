@@ -3,7 +3,6 @@ lint:
 
 format:
 	$${HOME}/.local/bin/poetry run ruff check --fix actrac/ test/ examples/
-	$${HOME}/.local/bin/poetry run black actrac/ test/ examples/
 
 mypy:
 	$${HOME}/.local/bin/poetry run mypy actrac/ examples/
