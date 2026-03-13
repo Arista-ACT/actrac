@@ -1,6 +1,6 @@
 [project]
 name = "actrac"
-version = "1.0.0"
+version = "1.1.0"
 description = "Library for interacting with ACT REST API"
 authors = [
     { name = "Arista Cloud Test Development", email = "act-dev@arista.com" }
