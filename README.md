@@ -87,7 +87,7 @@ Once the package has been installed you can run the following example to
 verify that everything has been installed properly.
 
     # Run UnitTests
-    admin:~ admin$ make unittest
+    admin:~ admin$ make unittests
 
 ### Connecting
 

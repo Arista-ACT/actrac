@@ -8,7 +8,7 @@ format:
 mypy:
 	$${HOME}/.local/bin/poetry run mypy actrac/ examples/
 
-unittest:
+unittests:
 	$${HOME}/.local/bin/poetry run pytest --cov=actrac --cov-report=term-missing test/unit/
 
 install-deps:
