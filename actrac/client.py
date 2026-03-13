@@ -175,7 +175,7 @@ class ACTClient:
         :param timeout: request timeout for client.
         :return: None
         """
-        self.token = self.get_access_token()
+        self.token = self.get_access_token(timeout=timeout)
         self.headers = {"content-type": "application/json", "Authorization": f"Bearer {self.token}"}
         self.client = httpx.Client(
             base_url=self.full_url, headers=self.headers, verify=self.cert, timeout=timeout
