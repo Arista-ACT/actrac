@@ -27,7 +27,7 @@ and then spinning them down (undeploying/stopping) after the tests have complete
 ### Requirements
 
 - Python 3.10 or later
-- Poetry 1.3.1 or later (required to run from source)
+- Poetry 2.0 or later (required to run from source)
 
 ## Installation
 
@@ -87,7 +87,7 @@ Once the package has been installed you can run the following example to
 verify that everything has been installed properly.
 
     # Run UnitTests
-    admin:~ admin$ make unittest
+    admin:~ admin$ make unittests
 
 ### Connecting
 

@@ -1,8 +1,10 @@
-[tool.poetry]
+[project]
 name = "actrac"
-version = "1.0.0"
+version = "1.1.0"
 description = "Library for interacting with ACT REST API"
-authors = ["Arista Cloud Test Development <act-dev@arista.com>"]
+authors = [
+    { name = "Arista Cloud Test Development", email = "act-dev@arista.com" }
+]
 readme = "README.md"
 license = "BSD-3-Clause"
 classifiers = [
@@ -17,14 +19,15 @@ classifiers = [
     "Intended Audience :: Developers",
     "Intended Audience :: System Administrators"
 ]
+requires-python = ">=3.10,<4.0"
+dependencies = [
+    "httpx>=0.27.0,<1.0.0"
+]
+
+[tool.poetry]
 packages = [{include = "actrac"}]
 
-[tool.poetry.dependencies]
-python = "^3.10"
-httpx = "^0.27.0"
-
 [tool.poetry.group.dev.dependencies]
-black = "^22.3.0"
 pytest = "^7.1.2"
 mypy = "^0.950"
 pytest-cov = "^4.0.0"
