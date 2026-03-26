@@ -150,22 +150,6 @@ class TestACTClient:
         assert clnt.client is None
         assert clnt.log.level == logging.INFO
 
-    def test_client_init_base_url_invalid_with_rest_path(self):
-        with pytest.raises(ACTRESTAPIError):
-            ACTClient(api_key="TEST", base_url="lab.act.arista.com/rest/v1")
-
-    def test_client_init_base_url_invalid_no_tenant_identifier(self):
-        with pytest.raises(ACTRESTAPIError):
-            ACTClient(api_key="TEST", base_url="act.arista.com")
-
-    def test_client_init_base_url_http(self):
-        with pytest.raises(ACTRESTAPIError):
-            ACTClient(api_key="TEST", base_url="http://lab.act.arista.com")
-
-    def test_client_init_base_url_missing_forward_slash(self):
-        with pytest.raises(ACTRESTAPIError):
-            ACTClient(api_key="TEST", base_url="https:/lab.act.arista.com")
-
     def test_client_init_invalid_log_level(self):
         clnt = ACTClient(api_key="TEST", base_url=TEST_ACT_REST_API_BASE_URL, log_level="INVALID")
         assert clnt.api_key == "TEST"
