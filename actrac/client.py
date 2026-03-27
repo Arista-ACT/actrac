@@ -34,7 +34,6 @@
 
 import json
 import logging
-import re
 import sys
 
 import httpx
@@ -68,22 +67,8 @@ class ACTClient:
         """
         self.api_key = api_key
         self.token = None
-        # ^               : Start of the string
-        # (https://)?     : Capturing group 1 for optional 'https://'
-        # (?:[a-zA-Z0-9-]+\.)+ : Non-capturing group for REQUIRED tenant ID portion.
-        #                        Matches alphanumeric/hyphen followed by a MANDATORY dot.
-        # key\.blah\.com  : Literal match for the required suffix.
-        # $               : End of string (ensures no path exists)
-        valid_url_pattern = re.compile(r"^(https://)?(?:[a-zA-Z0-9-]+\.)+act\.arista\.com$")
-        match = valid_url_pattern.match(base_url)
-        if not match:
-            err_str = (
-                f"Invalid base_url: {base_url}. Use format "
-                "https://<tenant identifier>.act.arista.com or <tenant identifier>.act.arista.com"
-            )
-            raise ACTRESTAPIError(err_str)
         # Add https:// if not already in base_url
-        if not match.group(1):
+        if not base_url.startswith("https://"):
             base_url = f"https://{base_url}"
         self.base_url = base_url
         self.full_url = f"{self.base_url}{ACT_REST_API_PATH}"
