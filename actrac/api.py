@@ -34,6 +34,7 @@
 
 import time
 from datetime import datetime
+from pathlib import Path
 
 import yaml
 
@@ -226,6 +227,22 @@ class ACTAPI:
         if device_count is not None:
             params["device_count"] = device_count
         return self._read_all_via_paging("/topologies", params, offset, page_size, timeout)
+
+    def _upload_diagram_file(self, diagram_file_path, timeout=90):
+        """Upload diagram file to be associated with a topology.
+
+        :param diagram_file_path: Path to local PNG file to be uploaded as topology diagram.
+        :param timeout: Timeout for API call.
+
+        The returned diagram_id is to be used during topology creation or update to
+        associate the uploaded diagram file with the topology.
+
+        Example resp - {diagram_id: <diagram_id>}
+        """
+        file_path = Path(diagram_file_path)
+        with open(file_path, "rb") as f:
+            files = {"diagram": (file_path.name, f, "image/png")}
+            return self.clnt.put("/topologies/diagram", files=files, timeout=timeout)
 
     def create_topology(  # noqa: PLR0913
         self,

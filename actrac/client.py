@@ -66,7 +66,9 @@ class ACTClient:
         :param log_stdout: print log messages to standard out or not.
         """
         self.api_key = api_key
+        self.client = None
         self.token = None
+        self.headers = {"Content-Type": "application/json"}
         # Add https:// if not already in base_url
         if not base_url.startswith("https://"):
             base_url = f"https://{base_url}"
@@ -75,7 +77,6 @@ class ACTClient:
         self.cert = cert
         self.log = logging.getLogger("actrac")
         self.configure_log(log_file, log_level, log_stdout)
-        self.client = None
         self.api = ACTAPI(self)
 
     def configure_log(self, log_file=None, log_level="INFO", log_stdout=False):
@@ -140,7 +141,7 @@ class ACTClient:
         # Authenticate with ACT and return the token
         url = f"{self.full_url}/auth/login"
         # Form the headers and data for the request
-        headers = {"content-type": "application/json"}
+        headers = {"Content-Type": "application/json"}
         data = {"api_key": self.api_key}
         # Send the request
         resp = httpx.post(url, headers=headers, json=data, verify=self.cert, timeout=timeout)
@@ -161,7 +162,7 @@ class ACTClient:
         :return: None
         """
         self.token = self.get_access_token(timeout=timeout)
-        self.headers = {"content-type": "application/json", "Authorization": f"Bearer {self.token}"}
+        self.headers["Authorization"] = f"Bearer {self.token}"
         self.client = httpx.Client(
             base_url=self.full_url, headers=self.headers, verify=self.cert, timeout=timeout
         )
@@ -195,6 +196,17 @@ class ACTClient:
         if self.client:
             json_data = json.dumps(data)
             resp = self.client.post(url, data=json_data, timeout=timeout)
+            return self._validate_response(resp)
+
+    def put(self, url, files=None, timeout=90):
+        """Make PUT Request with provided parameters.
+
+        :param url: URL for file upload endpoint.
+        :param files: dict formatted for file uploads.
+        :param timeout: configure timeout for put request.
+        """
+        if self.client:
+            resp = self.client.put(url, files=files, timeout=timeout)
             return self._validate_response(resp)
 
     def patch(self, url, data=None, timeout=90):
