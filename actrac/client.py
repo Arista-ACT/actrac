@@ -186,7 +186,7 @@ class ACTClient:
             resp = self.client.get(url, params=params, timeout=timeout)
             return self._validate_response(resp)
 
-    def post(self, url, data=None, timeout=90):
+    def post(self, url, data=None, files=None, timeout=90):
         """Make POST Request with provided parameters.
 
         :param url: ...
@@ -194,19 +194,8 @@ class ACTClient:
         :param timeout: configure timeout for post request.
         """
         if self.client:
-            json_data = json.dumps(data)
-            resp = self.client.post(url, data=json_data, timeout=timeout)
-            return self._validate_response(resp)
-
-    def put(self, url, files=None, timeout=90):
-        """Make PUT Request with provided parameters.
-
-        :param url: URL for file upload endpoint.
-        :param files: dict formatted for file uploads.
-        :param timeout: configure timeout for put request.
-        """
-        if self.client:
-            resp = self.client.put(url, files=files, timeout=timeout)
+            json_data = json.dumps(data) if data else None
+            resp = self.client.post(url, data=json_data, file=files, timeout=timeout)
             return self._validate_response(resp)
 
     def patch(self, url, data=None, timeout=90):

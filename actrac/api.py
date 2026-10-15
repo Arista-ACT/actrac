@@ -242,7 +242,7 @@ class ACTAPI:
         file_path = Path(diagram_file_path)
         with open(file_path, "rb") as f:
             files = {"diagram": (file_path.name, f, "image/png")}
-            return self.clnt.put("/topologies/diagram", files=files, timeout=timeout)
+            return self.clnt.post("/topologies/diagram", files=files, timeout=timeout)
 
     def create_topology(  # noqa: PLR0913
         self,
