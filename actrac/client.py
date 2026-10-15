@@ -195,7 +195,7 @@ class ACTClient:
         """
         if self.client:
             json_data = json.dumps(data) if data else None
-            resp = self.client.post(url, data=json_data, file=files, timeout=timeout)
+            resp = self.client.post(url, data=json_data, files=files, timeout=timeout)
             return self._validate_response(resp)
 
     def patch(self, url, data=None, timeout=90):
