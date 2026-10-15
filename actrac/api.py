@@ -276,7 +276,8 @@ class ACTAPI:
             yaml_topo = yaml.safe_load(topo_in)
         json_data = {"name": name, "description": description, "file": yaml_topo}
         if diagram_file_path:
-            json_data["diagram_path"] = diagram_file_path
+            upload_response = self._upload_diagram_file(diagram_file_path)
+            json_data["diagram_id"] = upload_response["diagram_id"]
         return self.clnt.post("/topologies", json=json_data, timeout=timeout)
 
     def update_topology(  # noqa: PLR0913
@@ -311,7 +312,8 @@ class ACTAPI:
         if description is not None:
             json_data["description"] = description
         if diagram_file_path is not None:
-            json_data["diagram_path"] = diagram_file_path
+            upload_response = self._upload_diagram_file(diagram_file_path)
+            json_data["diagram_id"] = upload_response["diagram_id"]
         if not json_data:
             self.clnt.log.warning(
                 "No parameters provided to update for topology with ID %s", topo_id
