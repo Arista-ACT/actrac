@@ -32,7 +32,6 @@
 
 """Client for interacting with the ACT Websocket API."""
 
-import json
 import logging
 import sys
 
@@ -68,7 +67,7 @@ class ACTClient:
         self.api_key = api_key
         self.client = None
         self.token = None
-        self.headers = {"Content-Type": "application/json"}
+        self.headers = None
         # Add https:// if not already in base_url
         if not base_url.startswith("https://"):
             base_url = f"https://{base_url}"
@@ -141,10 +140,9 @@ class ACTClient:
         # Authenticate with ACT and return the token
         url = f"{self.full_url}/auth/login"
         # Form the headers and data for the request
-        headers = {"Content-Type": "application/json"}
-        data = {"api_key": self.api_key}
+        json_data = {"api_key": self.api_key}
         # Send the request
-        resp = httpx.post(url, headers=headers, json=data, verify=self.cert, timeout=timeout)
+        resp = httpx.post(url, json=json_data, verify=self.cert, timeout=timeout)
         resp_data = self._validate_response(resp)
         # Get the token from the response or report an error
         token = resp_data.get("token")
@@ -162,7 +160,7 @@ class ACTClient:
         :return: None
         """
         self.token = self.get_access_token(timeout=timeout)
-        self.headers["Authorization"] = f"Bearer {self.token}"
+        self.headers = {"Authorization": f"Bearer {self.token}"}
         self.client = httpx.Client(
             base_url=self.full_url, headers=self.headers, verify=self.cert, timeout=timeout
         )
@@ -186,28 +184,35 @@ class ACTClient:
             resp = self.client.get(url, params=params, timeout=timeout)
             return self._validate_response(resp)
 
-    def post(self, url, data=None, files=None, timeout=90):
+    def post(self, url, json=None, data=None, files=None, timeout=90):  # noqa: PLR0913
         """Make POST Request with provided parameters.
 
         :param url: ...
+        :param json: ...
         :param data: ...
+        :param files: ...
         :param timeout: configure timeout for post request.
         """
         if self.client:
-            json_data = json.dumps(data) if data else None
-            resp = self.client.post(url, data=json_data, files=files, timeout=timeout)
+            resp = self.client.post(
+                url,
+                json=json,
+                data=data,
+                files=files,
+                timeout=timeout,
+            )
             return self._validate_response(resp)
 
-    def patch(self, url, data=None, timeout=90):
+    def patch(self, url, json=None, data=None, timeout=90):
         """Make PATCH Request with provided parameters.
 
         :param url: ...
+        :param json: ...
         :param data: ...
         :param timeout: configure timeout for patch request.
         """
         if self.client:
-            json_data = json.dumps(data)
-            resp = self.client.patch(url, data=json_data, timeout=timeout)
+            resp = self.client.patch(url, json=json, data=data, timeout=timeout)
             return self._validate_response(resp)
 
     def delete(self, url, timeout=90):
