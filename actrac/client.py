@@ -67,7 +67,6 @@ class ACTClient:
         self.api_key = api_key
         self.client = None
         self.token = None
-        self.headers = None
         # Add https:// if not already in base_url
         if not base_url.startswith("https://"):
             base_url = f"https://{base_url}"
@@ -137,14 +136,10 @@ class ACTClient:
 
         :return: access token as string for success.
         """
-        # Authenticate with ACT and return the token
         url = f"{self.full_url}/auth/login"
-        # Form the headers and data for the request
         json_data = {"api_key": self.api_key}
-        # Send the request
         resp = httpx.post(url, json=json_data, verify=self.cert, timeout=timeout)
         resp_data = self._validate_response(resp)
-        # Get the token from the response or report an error
         token = resp_data.get("token")
         if not token:
             err_str = f"Authentication failed. No token found: {resp_data}"
@@ -160,9 +155,11 @@ class ACTClient:
         :return: None
         """
         self.token = self.get_access_token(timeout=timeout)
-        self.headers = {"Authorization": f"Bearer {self.token}"}
         self.client = httpx.Client(
-            base_url=self.full_url, headers=self.headers, verify=self.cert, timeout=timeout
+            base_url=self.full_url,
+            headers={"Authorization": f"Bearer {self.token}"},
+            verify=self.cert,
+            timeout=timeout,
         )
 
     def disconnect(self, timeout=90):
