@@ -66,7 +66,6 @@ class ACTClient:
         """
         self.api_key = api_key
         self.client = None
-        self.token = None
         # Add https:// if not already in base_url
         if not base_url.startswith("https://"):
             base_url = f"https://{base_url}"
@@ -154,10 +153,10 @@ class ACTClient:
         :param timeout: request timeout for client.
         :return: None
         """
-        self.token = self.get_access_token(timeout=timeout)
+        token = self.get_access_token(timeout=timeout)
         self.client = httpx.Client(
             base_url=self.full_url,
-            headers={"Authorization": f"Bearer {self.token}"},
+            headers={"Authorization": f"Bearer {token}"},
             verify=self.cert,
             timeout=timeout,
         )
