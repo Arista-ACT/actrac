@@ -276,7 +276,7 @@ class ACTAPI:
             yaml_topo = yaml.safe_load(topo_in)
         json_data = {"name": name, "description": description, "file": yaml_topo}
         if diagram_file_path:
-            upload_response = self._upload_diagram_file(diagram_file_path)
+            upload_response = self._upload_diagram_file(diagram_file_path, timeout=timeout)
             json_data["diagram_id"] = upload_response["diagram_id"]
         return self.clnt.post("/topologies", json=json_data, timeout=timeout)
 
@@ -295,7 +295,8 @@ class ACTAPI:
         :param name: new name to update for the provided topology ID.
         :param topo_def_file_path: new topology file path to update for provided topology ID.
         :param description: new description to update for provided topology ID
-        :param diagram_file_path: new diagram file to update for provided topology ID.
+        :param diagram_file_path: path to a local PNG to upload as the new diagram,
+            or "" to remove the current diagram. None leaves the diagram unchanged.
         :param timeout: Timeout for API call.
         :return: dict of resp/results.
         Example resp - {...}
@@ -311,8 +312,10 @@ class ACTAPI:
             json_data["file"] = yaml_topo
         if description is not None:
             json_data["description"] = description
-        if diagram_file_path is not None:
-            upload_response = self._upload_diagram_file(diagram_file_path)
+        if diagram_file_path == "":
+            json_data["diagram_id"] = ""
+        elif diagram_file_path is not None:
+            upload_response = self._upload_diagram_file(diagram_file_path, timeout=timeout)
             json_data["diagram_id"] = upload_response["diagram_id"]
         if not json_data:
             self.clnt.log.warning(
