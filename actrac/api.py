@@ -237,8 +237,14 @@ class ACTAPI:
         The returned diagram_id is to be used during topology creation or update to
         associate the uploaded diagram file with the topology.
 
-        Example resp - {diagram_id: <diagram_id>}
+        If diagram_file_path is an empty string simply return it formatted the same
+        as the upload response.
+
+        Example upload resp - {"diagram_id": "<diagram_id>"}
+        Example emptry string resp - {"diagram_id": ""}
         """
+        if diagram_file_path == "":
+            return {"diagram_id": diagram_file_path}
         file_path = Path(diagram_file_path)
         with open(file_path, "rb") as f:
             return self.clnt.post(
@@ -295,7 +301,8 @@ class ACTAPI:
         :param name: new name to update for the provided topology ID.
         :param topo_def_file_path: new topology file path to update for provided topology ID.
         :param description: new description to update for provided topology ID
-        :param diagram_file_path: new diagram file to update for provided topology ID.
+        :param diagram_file_path: path to a local PNG to upload as the new diagram,
+            or "" to remove the current diagram. None leaves the diagram unchanged.
         :param timeout: Timeout for API call.
         :return: dict of resp/results.
         Example resp - {...}
