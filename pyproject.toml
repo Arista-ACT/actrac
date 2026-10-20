@@ -30,7 +30,7 @@ dependencies = [
 packages = [{include = "actrac"}]
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^7.1.2"
+pytest = "^9.0.3"
 mypy = "^0.950"
 pytest-cov = "^4.0.0"
 ruff = "^0.0.287"
