@@ -35,7 +35,7 @@ ACTRAC v2.0.0 adds functionality for uploading diagram files that can be associa
 topology during creation or update. This functionality requires the ACT REST Server to be
 on a version that supports this new feature.
 
-If you are not uploading or associating diagram files with topology then no actions is
+If you are not uploading or associating diagram files with topologies then no action is
 necessary. If you plan to use the diagram upload/association functionality please verify
 with your Arista contact that the ACT services for your Tenant will support the feature.
 
