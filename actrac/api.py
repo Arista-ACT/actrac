@@ -34,6 +34,7 @@
 
 import time
 from datetime import datetime
+from pathlib import Path
 
 import yaml
 
@@ -227,6 +228,31 @@ class ACTAPI:
             params["device_count"] = device_count
         return self._read_all_via_paging("/topologies", params, offset, page_size, timeout)
 
+    def _upload_diagram_file(self, diagram_file_path, timeout=90):
+        """Upload diagram file to be associated with a topology.
+
+        :param diagram_file_path: Path to local PNG file to be uploaded as topology diagram.
+        :param timeout: Timeout for API call.
+
+        The returned diagram_id is to be used during topology creation or update to
+        associate the uploaded diagram file with the topology.
+
+        If diagram_file_path is an empty string simply return it formatted the same
+        as the upload response.
+
+        Example upload resp - {"diagram_id": "<diagram_id>"}
+        Example emptry string resp - {"diagram_id": ""}
+        """
+        if diagram_file_path == "":
+            return {"diagram_id": diagram_file_path}
+        file_path = Path(diagram_file_path)
+        with open(file_path, "rb") as f:
+            return self.clnt.post(
+                "/topologies/diagram",
+                files={"diagram": (file_path.name, f, "image/png")},
+                timeout=timeout,
+            )
+
     def create_topology(  # noqa: PLR0913
         self,
         name,
@@ -251,13 +277,14 @@ class ACTAPI:
             raise ACTRESTAPIError(
                 "A path to a topolofy definition 'topo_def_file_path' must be provided"
             )
-        # Read the topology file and convert to json data
+        # Read the topology file and convert to json formattable data
         with open(topo_def_file_path, "r") as topo_in:
             yaml_topo = yaml.safe_load(topo_in)
-        data = {"name": name, "description": description, "file": yaml_topo}
+        json_data = {"name": name, "description": description, "file": yaml_topo}
         if diagram_file_path:
-            data["diagram_path"] = diagram_file_path
-        return self.clnt.post("/topologies", data=data, timeout=timeout)
+            upload_response = self._upload_diagram_file(diagram_file_path)
+            json_data["diagram_id"] = upload_response["diagram_id"]
+        return self.clnt.post("/topologies", json=json_data, timeout=timeout)
 
     def update_topology(  # noqa: PLR0913
         self,
@@ -274,30 +301,32 @@ class ACTAPI:
         :param name: new name to update for the provided topology ID.
         :param topo_def_file_path: new topology file path to update for provided topology ID.
         :param description: new description to update for provided topology ID
-        :param diagram_file_path: new diagram file to update for provided topology ID.
+        :param diagram_file_path: path to a local PNG to upload as the new diagram,
+            or "" to remove the current diagram. None leaves the diagram unchanged.
         :param timeout: Timeout for API call.
         :return: dict of resp/results.
         Example resp - {...}
         """
         if not topo_id:
             raise ACTRESTAPIError("A topology ID as 'topo_id' to update must be provided")
-        data = {}
+        json_data = {}
         if name is not None:
-            data["name"] = name
+            json_data["name"] = name
         if topo_def_file_path is not None:
             with open(topo_def_file_path, "r") as topo_in:
                 yaml_topo = yaml.safe_load(topo_in)
-            data["file"] = yaml_topo
+            json_data["file"] = yaml_topo
         if description is not None:
-            data["description"] = description
+            json_data["description"] = description
         if diagram_file_path is not None:
-            data["diagram_path"] = diagram_file_path
-        if not data:
+            upload_response = self._upload_diagram_file(diagram_file_path)
+            json_data["diagram_id"] = upload_response["diagram_id"]
+        if not json_data:
             self.clnt.log.warning(
                 "No parameters provided to update for topology with ID %s", topo_id
             )
             return None
-        return self.clnt.patch(f"/topologies/{topo_id}", data=data, timeout=timeout)
+        return self.clnt.patch(f"/topologies/{topo_id}", json=json_data, timeout=timeout)
 
     def delete_topology(self, topology_definition_id=None, timeout=90):
         """Delete a topology.
@@ -380,8 +409,8 @@ class ACTAPI:
             raise ACTRESTAPIError("A 'name' for the lab must be provided")
         if not topo_def:
             raise ACTRESTAPIError("A topolofy definition 'topo_def' for the lab must be provided")
-        data = {"name": name, "description": description, "topology_definition": topo_def}
-        return self.clnt.post("/labs", data=data, timeout=timeout)
+        json_data = {"name": name, "description": description, "topology_definition": topo_def}
+        return self.clnt.post("/labs", json=json_data, timeout=timeout)
 
     def update_lab(  # noqa: PLR0913
         self,
@@ -401,15 +430,15 @@ class ACTAPI:
         """
         if not lab_id:
             raise ACTRESTAPIError("A lab ID as 'lab_id' to update must be provided")
-        data = {}
+        json_data = {}
         if name is not None:
-            data["name"] = name
+            json_data["name"] = name
         if description is not None:
-            data["description"] = description
-        if not data:
+            json_data["description"] = description
+        if not json_data:
             self.clnt.log.warning("No parameters provided to update for lab with ID %s", lab_id)
             return None
-        return self.clnt.patch(f"/labs/{lab_id}", data=data, timeout=timeout)
+        return self.clnt.patch(f"/labs/{lab_id}", json=json_data, timeout=timeout)
 
     def delete_lab(self, lab_id, timeout=90):
         """Delete a lab by ID.
@@ -571,14 +600,14 @@ class ACTAPI:
         elif group_id == 0:
             raise ACTRESTAPIError("'group_id' can not be 0.")
 
-        data = {"user_name": user_name, "password": password, "group_id": group_id}
+        json_data = {"user_name": user_name, "password": password, "group_id": group_id}
         if first_name is not None:
-            data["first_name"] = first_name
+            json_data["first_name"] = first_name
         if last_name is not None:
-            data["last_name"] = last_name
+            json_data["last_name"] = last_name
         if email_address is not None:
-            data["email_address"] = email_address
-        return self.clnt.post("/users", data=data, timeout=timeout)
+            json_data["email_address"] = email_address
+        return self.clnt.post("/users", json=json_data, timeout=timeout)
 
     def update_user(  # noqa: PLR0913
         self,
@@ -602,23 +631,23 @@ class ACTAPI:
         """
         if not user_id:
             raise ACTRESTAPIError("A user ID as 'user_id' to update must be provided")
-        data = {}
+        json_data = {}
         if first_name is not None:
-            data["first_name"] = first_name
+            json_data["first_name"] = first_name
         if last_name is not None:
-            data["last_name"] = last_name
+            json_data["last_name"] = last_name
         if email_address is not None:
-            data["email_address"] = email_address
+            json_data["email_address"] = email_address
         if group_id is not None:
             if not isinstance(group_id, int):
                 raise ACTRESTAPIError("Invalid 'group_id' type. Must be an integer")
             if group_id == 0:
                 raise ACTRESTAPIError("'group_id' can not be 0.")
-            data["group_id"] = group_id
-        if not data:
+            json_data["group_id"] = group_id
+        if not json_data:
             self.clnt.log.warning("No parameters provided to update for user with ID %s", user_id)
             return None
-        return self.clnt.patch(f"/users/{user_id}", data=data, timeout=timeout)
+        return self.clnt.patch(f"/users/{user_id}", json=json_data, timeout=timeout)
 
     def delete_user(self, user_id, timeout=90):
         """Delete a user by ID.
@@ -674,13 +703,13 @@ class ACTAPI:
         elif not isinstance(expiration_date, datetime):
             raise ACTRESTAPIError("Invalid 'expiration_date' type. Must be a datetime")
 
-        data = {
+        json_data = {
             "user_id": user_id,
             "description": description,
             "exp_date": expiration_date.strftime("%d-%m-%Y"),
         }
 
-        return self.clnt.post("/auth/apikey", data=data, timeout=timeout)
+        return self.clnt.post("/auth/apikey", json=json_data, timeout=timeout)
 
     def delete_api_key_for(self, key_id, timeout=90):
         """Delete an API key for a user.
