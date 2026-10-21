@@ -4,12 +4,12 @@
 
 1. [Overview](#overview)
     - [Requirements](#requirements)
+    - [Notes](#notes)
 1. [Installation](#installation)
     - [Development: Run from Source](#development-run-from-source)
 1. [Getting Started](#getting-started)
     - [Connecting](#connecting)
     - [Examples](#examples)
-1. [Notes](#notes)
 1. [Testing](#testing)
 1. [Contact or Questions](#contact-or-questions)
 1. [Contributing](#contributing)
@@ -28,6 +28,17 @@ and then spinning them down (undeploying/stopping) after the tests have complete
 
 - Python 3.10 or later
 - Poetry 2.0 or later (required to run from source)
+
+### Notes
+
+ACTRAC v2.0.0 adds functionality for uploading diagram files that can be associated with a
+topology during creation or update. This functionality requires the ACT REST Server to be
+on a version that supports this new feature.
+
+If you are not uploading or associating diagram files with topologies then no action is
+necessary. If you plan to use the diagram upload/association functionality please verify
+with your Arista contact that the ACT services for your Tenant will support the feature.
+
 
 ## Installation
 
@@ -110,7 +121,7 @@ Example connecting to the ACT API and getting all available versions:
 
     >>> from actrac.client import ACTClient
     >>> client = ACTClient(api_key="EXAMPLE", base_url="https://lab.act.arista.com", log_stdout=True)
-    >>> client.connect(username, password)
+    >>> client.connect()
     >>> result = client.api.available_node_versions()
     >>> print result
     {...large output omitted...}
@@ -120,7 +131,7 @@ Example connecting to the ACT API and getting all available versions for a HTTPS
 
     >>> from actrac.client import ACTClient
     >>> client = ACTClient(api_key="EXAMPLE", base_url="https://<tenant identifier>.act.arista.com", log_stdout=True)
-    >>> client.connect(username, password)
+    >>> client.connect()
     >>> result = client.api.available_node_versions()
     >>> print result
     {...large output omitted...}
@@ -130,7 +141,7 @@ Example connecting to the ACT API and getting all labs:
 
     >>> from actrac.client import ACTClient
     >>> client = ACTClient(api_key="EXAMPLE", base_url="lab.act.arista.com", log_stdout=True)
-    >>> client.connect(username, password)
+    >>> client.connect()
     >>> result = client.api.read_labs()
     >>> print result
     {...large output omitted...}
@@ -140,7 +151,7 @@ Example connecting to the ACT API and attempting to start a lab and wait for it 
 
     >>> from actrac.client import ACTClient
     >>> client = ACTClient(api_key="EXAMPLE", base_url="lab.act.arista.com", log_stdout=True)
-    >>> client.connect(username, password)
+    >>> client.connect()
     >>> result = client.api.read_lab_by_name("EXAMPLE LAB")
     >>> lab_id = result["lab_id"]
     >>> print("START DEPLOY WAIT FOR RUNNING\n")
