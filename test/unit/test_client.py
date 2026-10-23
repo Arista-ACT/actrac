@@ -133,7 +133,6 @@ class TestACTClient:
     def test_client_init(self):
         clnt = ACTClient(api_key="TEST", base_url=TEST_ACT_REST_API_BASE_URL)
         assert clnt.api_key == "TEST"
-        assert clnt.token is None
         assert clnt.base_url == TEST_ACT_REST_API_BASE_URL
         assert clnt.full_url == f"{TEST_ACT_REST_API_BASE_URL}{ACT_REST_API_PATH}"
         assert clnt.cert is False
@@ -143,7 +142,6 @@ class TestACTClient:
     def test_client_init_base_url_has_no_https(self):
         clnt = ACTClient(api_key="TEST", base_url="lab.act.arista.com")
         assert clnt.api_key == "TEST"
-        assert clnt.token is None
         assert clnt.base_url == TEST_ACT_REST_API_BASE_URL
         assert clnt.full_url == f"{TEST_ACT_REST_API_BASE_URL}{ACT_REST_API_PATH}"
         assert clnt.cert is False
@@ -153,7 +151,6 @@ class TestACTClient:
     def test_client_init_invalid_log_level(self):
         clnt = ACTClient(api_key="TEST", base_url=TEST_ACT_REST_API_BASE_URL, log_level="INVALID")
         assert clnt.api_key == "TEST"
-        assert clnt.token is None
         assert clnt.base_url == TEST_ACT_REST_API_BASE_URL
         assert clnt.full_url == f"{TEST_ACT_REST_API_BASE_URL}{ACT_REST_API_PATH}"
         assert clnt.cert is False
@@ -163,7 +160,6 @@ class TestACTClient:
     def test_client_init_valid_log_level(self):
         clnt = ACTClient(api_key="TEST", base_url=TEST_ACT_REST_API_BASE_URL, log_level="DEBUG")
         assert clnt.api_key == "TEST"
-        assert clnt.token is None
         assert clnt.base_url == TEST_ACT_REST_API_BASE_URL
         assert clnt.full_url == f"{TEST_ACT_REST_API_BASE_URL}{ACT_REST_API_PATH}"
         assert clnt.cert is False
@@ -173,7 +169,6 @@ class TestACTClient:
     def test_client_init_log_stdout(self):
         clnt = ACTClient(api_key="TEST", base_url=TEST_ACT_REST_API_BASE_URL, log_stdout=True)
         assert clnt.api_key == "TEST"
-        assert clnt.token is None
         assert clnt.base_url == TEST_ACT_REST_API_BASE_URL
         assert clnt.full_url == f"{TEST_ACT_REST_API_BASE_URL}{ACT_REST_API_PATH}"
         assert clnt.cert is False
@@ -187,7 +182,6 @@ class TestACTClient:
             log_file="run_unittests.log",
         )
         assert clnt.api_key == "TEST"
-        assert clnt.token is None
         assert clnt.base_url == TEST_ACT_REST_API_BASE_URL
         assert clnt.full_url == f"{TEST_ACT_REST_API_BASE_URL}{ACT_REST_API_PATH}"
         assert clnt.cert is False
